@@ -352,6 +352,19 @@ function turCipleri() {
   isaretle();
 }
 const DURUM_ET = { "Başvuru açık": "acik", "Kapandı": "kapandi", "Tarih belirtilmemiş": "belirsiz" };
+/* İL LİSTESİ: 81 ilin tamamı her zaman alfabetik durur — o ilde ilan olmasa
+   bile seçenek görünür, seçilince "ilan bulunamadı" mesajı çıkar. Verideki
+   sıradışı yazımlar ("Afyon", "İçel" gibi) normalize edilip doğru ile eşleşir;
+   81 il dışında bir yer (ör. "Yurt dışı") çıkarsa listenin sonuna eklenir. */
+const ILLER81 = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Amasya","Ankara","Antalya","Artvin","Aydın","Balıkesir","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Isparta","Mersin","İstanbul","İzmir","Kars","Kastamonu","Kayseri","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Kahramanmaraş","Mardin","Muğla","Muş","Nevşehir","Niğde","Ordu","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Tekirdağ","Tokat","Trabzon","Tunceli","Şanlıurfa","Uşak","Van","Yozgat","Zonguldak","Aksaray","Bayburt","Karaman","Kırıkkale","Batman","Şırnak","Bartın","Ardahan","Iğdır","Yalova","Karabük","Kilis","Osmaniye","Düzce"];
+const IL_TAKMA = { afyon:"afyonkarahisar", icel:"mersin", kmaras:"kahramanmaras", kmaras:"kahramanmaras", maras:"kahramanmaras" };
+function ilKey(s) { /* "Afyon"≈"Afyonkarahisar", "İçel"≈"Mersin" yapan anahtar */
+  let k = String(s || "").trim().toLowerCase("tr");
+  k = k.replaceAll("ı","i").replaceAll("ğ","g").replaceAll("ş","s").replaceAll("ü","u")
+       .replaceAll("ö","o").replaceAll("ç","c").replaceAll("â","a").replaceAll("î","i").replaceAll("û","u");
+  k = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
+  return IL_TAKMA[k] || k;
+}
 /* Süzgeç seçeneklerini veriden kurar. İlk açılışta bir kez, veri tazelendikçe
    bir daha çağrılır; kullanıcının seçimi korunur. */
 function secenekler() {
@@ -360,8 +373,12 @@ function secenekler() {
   cip($("#fKat"), say("kategori", i=>[i.kategori]), S.kat);
   cip($("#fDurum"), [["Başvuru açık", null], ["Kapandı", null], ["Tarih belirtilmemiş", null]], S.durum, (ad) => DURUM_ET[ad]);
   const secili = $("#il").value;
+  const bilinen = new Set(ILLER81.map(ilKey));
+  const ekyer = [...new Set(say("iller", i=>i.iller||[]).map(([il]) => il).filter(il => !bilinen.has(ilKey(il))))];
+  const liste = ILLER81.slice().sort((a,b) => a.localeCompare(b, "tr"));
   $("#il").innerHTML = '<option value="">Tüm iller</option>';
-  for (const [il] of say("iller", i=>i.iller||[])) $("#il").insertAdjacentHTML("beforeend", `<option>${il}</option>`);
+  for (const ad of liste) $("#il").insertAdjacentHTML("beforeend", `<option value="${ilKey(ad)}">${ad}</option>`);
+  for (const ad of ekyer.sort((a,b) => a.localeCompare(b, "tr"))) $("#il").insertAdjacentHTML("beforeend", `<option value="${ilKey(ad)}">${ad}</option>`);
   if ([...$("#il").options].some(o => o.value === secili)) $("#il").value = secili;
   else { $("#il").value = ""; S.il = ""; }
 }
@@ -379,7 +396,7 @@ function uygun(i) {
     if (!uygunTur && !uygunDis) return false;
   }
   if (S.kat.size && !S.kat.has(i.kategori)) return false;
-  if (S.il && !(i.iller||[]).includes(S.il)) return false;
+  if (S.il && !(i.iller||[]).some(x => ilKey(x) === S.il)) return false;
   if (S.q) { const a = i.arama || tr([i.baslik,i.kurum,(i.unvanlar||[]).join(" ")].join(" "));
     if (!S.q.toLowerCase("tr").split(/\s+/).every(k=>a.includes(k))) return false; }
   const g = saat(i.sonBasvuru);
