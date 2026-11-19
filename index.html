@@ -133,7 +133,7 @@
       </div>
 
       <div class="grp">
-        <label>KPSS puan türü <span class="ipucu">P3 · P93 · P94 — bunların dışındakiler “KPSS dışı” listesinde</span></label>
+        <label>KPSS puan türü <span class="ipucu">P3 · lisans — P93 · önlisans — P94 · ortaöğretim; dışındakiler “KPSS dışı” listesinde</span></label>
         <div class="cipler" id="fTur"></div>
       </div>
 
@@ -169,9 +169,6 @@
           <option value="puan">Taban puan (düşük → yüksek)</option>
         </select>
       </div>
-
-      <div class="yol">Veriler <b>ilan.memurlar.net</b> üzerinden <code>node scraper.mjs</code>
-        komutuyla tazelenir. Sayfa bu klasördeki JSON dosyalarını okur.</div>
     </div>
   </aside>
 
@@ -280,8 +277,9 @@ const say = (alan, degerFn) => {
   return [...m].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],"tr"));
 };
 /* Çip grubu: çoktan seçmeli. Boş grup = sınırlama yok (Tümü gibi davranır). */
-/* KPSS puan türü süzgeci SADECE üç türü gösterir: P3 (ortaöğretim), P93 (ön lisans),
-   P94 (lisans). Bu üçünün dışındaki bütün ilanlar "KPSS dışı" sekmesindedir.
+/* KPSS puan türü süzgeci SADECE üç türü gösterir (ÖSYM'nin resmî eşlemesi):
+   P3 (lisans), P93 (önlisans), P94 (ortaöğretim). Bu üçünün dışındaki
+   bütün ilanlar "KPSS dışı" sekmesindedir.
    İlanı olmasa bile üç tür de listelenir; yoksa 0 yazar. */
 const UC_TUR = ["P3", "P93", "P94"];
 function sinifla(i) {
@@ -296,9 +294,12 @@ function sinifla(i) {
   if (t.size) { i.puanSinifi = "kpss-disi"; i.puanTurleriUC = []; return i; } // ilanda açıkça başka tür yazıyor
   if (!/\bkpss\b/i.test(metin) && !i.kpssSartli) { i.puanSinifi = "kpss-disi"; i.puanTurleriUC = []; return i; }
   const o = i.ogrenim || [];
-  const y = o.includes("Ortaöğretim") ? "P3" : o.includes("Ön lisans") ? "P93" : (o.includes("Lisans") && !o.includes("Lisansüstü")) ? "P94" : null;
-  i.puanSinifi = y ? "kpssli" : "kpss-disi";
-  i.puanTurleriUC = y ? [y] : [];
+  const y = [];
+  if (o.includes("Lisans") && !o.includes("Lisansüstü")) y.push("P3");   // P3 = lisans
+  if (o.includes("Ön lisans")) y.push("P93");                              // P93 = önlisans
+  if (o.includes("Ortaöğretim")) y.push("P94");                            // P94 = ortaöğretim
+  i.puanSinifi = y.length ? "kpssli" : "kpss-disi";
+  i.puanTurleriUC = y;
   i.kpssTuruBiliniyor = false;
   return i;
 }
@@ -308,7 +309,7 @@ function turListesi() {
     for (const t of i.puanTurleriUC || []) if (UC_TUR.includes(t)) n[t]++;
     if (i.puanSinifi === "kpss-disi") n.dis++;
   }
-  return [["P3 · ortaöğretim", ["P3", n.P3]], ["P93 · ön lisans", ["P93", n.P93]], ["P94 · lisans", ["P94", n.P94]], ["KPSS dışı", ["dis", n.dis]]];
+  return [["P3 · lisans", ["P3", n.P3]], ["P93 · önlisans", ["P93", n.P93]], ["P94 · ortaöğretim", ["P94", n.P94]], ["KPSS dışı", ["dis", n.dis]]];
 }
 function cip(kutu, liste, grup, esleme) {
   kutu.innerHTML = "";
@@ -332,7 +333,7 @@ function turCipleri() {
     const b = document.createElement("button");
     b.className = "cip"; b.type = "button"; b.dataset.v = v;
     if (v === "dis") b.title = "KPSS şartı olmayanlar ile P3/P93/P94 dışında puan türü isteyenler (P10, P43, P121 …) ve kendi giriş sınavı olanlar";
-    else b.title = v + " — " + ({ P3: "ortaöğretim KPSS puanı", P93: "ön lisans KPSS puanı", P94: "lisans KPSS puanı" })[v];
+    else b.title = v + " — " + ({ P3: "lisans KPSS puanı", P93: "önlisans KPSS puanı", P94: "ortaöğretim KPSS puanı" })[v];
     b.innerHTML = `${ad} <i>${adet}</i>`;
     b.onclick = () => {
       if (S.tur.has(v)) S.tur.delete(v);
@@ -550,7 +551,7 @@ const KAYNAKLAR = [
 ];
 const dn = document.getElementById("dipnot");
 if (dn) dn.innerHTML = "<br>Sitedeki ilanlar bu kaynaklardan toplanır; karta tıkladığınızda ilgili kaynağın kendi sayfası yeni sekmede açılır. "
-  + "Kartlardaki <b>Resmî Gazete</b>, <b>İŞKUR</b>, <b>Kamuilan</b> gibi etiketler ilanın kökenini gösterir.<br>"
+  + "Kartlardaki <b>Resmî Gazete</b>, <b>İŞKUR</b>, <b>Kamu İlanları</b> gibi etiketler ilanın kökenini gösterir.<br>"
   + KAYNAKLAR.map(([ad, aciklama, url]) => "&middot; <a href=\"" + url + "\" target=\"_blank\" rel=\"noopener nofollow\"><b>" + ad + "</b></a>"
       + ' <span style="color:#7c8798">(' + aciklama + " &middot; son tarama " + (OZET.guncellemeYazi || "") + ")</span>")
       .join("<br>");
