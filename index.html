@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KPSS İlan Ajansı — Ortaöğretim / Ön lisans / Lisans kamu alımları</title>
+<meta name="description" content="Kamu personel alım ilanlarını tek yerde toplar; il, öğrenim, KPSS puan türü ve puana göre filtreler, ilana tıklayınca kaynak sayfaya götürür." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+<style>
+  :root {
+    --bg: #f5f7fa; --panel: #fff; --metin: #17212e; --soluk: #64748b;
+    --kenar: #e2e8f0; --marka: #1d4ed8; --marka2: #0f766e;
+    --acik: #15803d; --acikbg: #dcfce7; --gec: #b45309; --gecbg: #fef3c7;
+    --kapali: #64748b; --kapalibg: #eef2f6; --girise: #7c3aed; --girisebg: #f3e8ff;
+    --golge: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1724; --panel:#16213000; --metin:#e8eef7; --soluk:#9fb0c6; --kenar:#26364c; --marka:#7aa2ff; --marka2:#4fd1c5;
+            --acik:#4ade80; --acikbg:#12321f; --gec:#fbbf24; --gecbg:#33290d; --kapali:#9fb0c6; --kapalibg:#1d2b3d; --girise:#c4b5fd; --girisebg:#2a2145;
+            --panel:#162130; --golge:none; }
+  }
+  * { box-sizing: border-box }
+  body { margin:0; background:var(--bg); color:var(--metin);
+    font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Turkish,sans-serif; }
+  a { color:var(--marka) }
+  header.site { background:linear-gradient(135deg,#12294f,#1d4ed8 55%,#0f766e); color:#fff; padding:26px 18px 22px; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 14px }
+  header.site h1 { margin:0 0 4px; font-size:26px; letter-spacing:-.3px }
+  header.site p { margin:0; opacity:.9; font-size:14px; max-width:70ch }
+  .ozet { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px }
+  .kutu { background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); border-radius:12px; padding:8px 14px; min-width:104px }
+  .kutu b { display:block; font-size:21px; line-height:1.2 }
+  .kutu span { font-size:12px; opacity:.85 }
+
+  main { max-width:1180px; margin:0 auto; padding:18px 14px 60px; display:grid; grid-template-columns:270px 1fr; gap:18px; align-items:start }
+  @media (max-width:900px){ main { grid-template-columns:1fr } }
+
+  .panel { background:var(--panel); border:1px solid var(--kenar); border-radius:14px; box-shadow:var(--golge) }
+  aside .panel { padding:14px; position:sticky; top:12px }
+  @media (max-width:900px){ aside .panel { position:static } }
+  .f-bas { display:flex; align-items:center; justify-content:space-between; margin:0 0 10px }
+  .f-bas h2 { font-size:14px; margin:0; text-transform:uppercase; letter-spacing:.4px; color:var(--soluk) }
+  .grp { border-top:1px dashed var(--kenar); padding:11px 0 }
+  .grp:first-of-type { border-top:0; padding-top:0 }
+  .grp > label { display:block; font-size:12.5px; font-weight:600; color:var(--soluk); margin-bottom:6px }
+  input[type=search], select { width:100%; padding:9px 10px; border:1px solid var(--kenar); border-radius:9px; background:var(--panel); color:var(--metin); font:inherit }
+  .cipler { display:flex; flex-wrap:wrap; gap:6px }
+  .cip { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--kenar); background:var(--panel); color:var(--metin);
+    border-radius:999px; padding:5px 10px; font-size:12.5px; cursor:pointer; user-select:none; transition:.12s }
+  .cip:hover { border-color:var(--marka) }
+  .cip.on { background:var(--marka); border-color:var(--marka); color:#fff }
+  .cip i { font-style:normal; opacity:.7; font-size:11px }
+  .btn { border:1px solid var(--kenar); background:var(--panel); color:var(--metin); border-radius:9px; padding:8px 11px; font:inherit; cursor:pointer }
+  .btn:hover { border-color:var(--marka); color:var(--marka) }
+  .btn.tam { width:100%; text-align:center }
+
+  .ust { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin:0 0 12px }
+  .ust .sol { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .say { color:var(--soluk); font-size:13.5px }
+  .sekme { display:inline-flex; background:var(--panel); border:1px solid var(--kenar); border-radius:999px; padding:3px }
+  .sekme button { border:0; background:transparent; color:var(--soluk); padding:7px 14px; border-radius:999px; font:inherit; cursor:pointer }
+  .sekme button.on { background:var(--marka); color:#fff }
+
+  .kartlar { display:grid; gap:12px }
+  .ilan { background:var(--panel); border:1px solid var(--kenar); border-radius:14px; padding:14px 16px; box-shadow:var(--golge);
+    display:grid; gap:8px; cursor:pointer; transition:.12s; position:relative }
+  .ilan:hover { border-color:var(--marka); transform:translateY(-1px) }
+  .ilan h3 { margin:0; font-size:16.5px; line-height:1.35 }
+  .ilan h3 a { color:var(--metin); text-decoration:none }
+  .ilan h3 a:hover { color:var(--marka); text-decoration:underline }
+  .kurum { color:var(--marka2); font-weight:600; font-size:13.5px }
+  .etiketler { display:flex; flex-wrap:wrap; gap:6px }
+  .et { font-size:12px; padding:3px 9px; border-radius:7px; background:var(--kapalibg); color:var(--soluk); white-space:nowrap }
+  .et.puan { background:#e0edff; color:#1e40af; font-weight:600 }
+  .et.kadro { background:#dcfce7; color:#14532d; font-weight:600 }
+  .et.tarih { background:var(--gecbg); color:var(--gec); font-weight:600 }
+  .et.unvan { background:#f1f5f9; color:#334155 }
+  .et.tur { background:#fef3c7; color:#78350f; font-weight:700 }
+  .et.dis { background:#f3e8ff; color:#5b21b6; font-weight:600 }
+  .cip.turla { border-style:dashed; color:var(--soluk); font-size:12px }
+  label .ipucu { display:block; font-weight:400; color:var(--soluk); font-size:11.5px; margin-top:2px }
+  .durum { position:absolute; top:14px; right:16px; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; letter-spacing:.3px }
+  .d-acik { background:var(--acikbg); color:var(--acik) }
+  .d-son { background:var(--girisebg); color:var(--girise) }
+  .d-kapali { background:var(--kapalibg); color:var(--kapali) }
+  .d-bel { background:var(--kapalibg); color:var(--kapali) }
+  .ozetmetin { color:var(--soluk); font-size:13.5px; margin:0 }
+  .alt { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px; color:var(--soluk); flex-wrap:wrap }
+  .git { color:var(--marka); font-weight:600; text-decoration:none; white-space:nowrap }
+  .git:hover { text-decoration:underline }
+  .uygularda { background:#eef4ff; border:1px solid #cfdffb; color:#1e3a8a; border-radius:12px; padding:10px 14px; margin:0 0 12px; font-size:13.5px }
+  .uygularda b { font-size:15px }
+  @media (prefers-color-scheme: dark){ .uygularda{ background:#15243c; border-color:#28456e; color:#bfd6ff } .et.puan{background:#16304f;color:#a9cbff} .et.kadro{background:#12321f;color:#86efac} }
+
+  /* puan karnesi */
+  table { width:100%; border-collapse:collapse; font-size:14px }
+  th, td { padding:9px 10px; border-bottom:1px solid var(--kenar); text-align:left }
+  th { font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--soluk); position:sticky; top:0; background:var(--panel) }
+  tbody tr:hover { background:rgba(29,78,216,.05) }
+  td.sayi { text-align:right; font-variant-numeric:tabular-nums; font-weight:600 }
+
+  .bos { text-align:center; padding:46px 20px; color:var(--soluk) }
+  .bos b { display:block; color:var(--metin); font-size:17px; margin-bottom:6px }
+  footer { text-align:center; color:var(--soluk); font-size:12.5px; padding:0 16px 40px }
+  .yol { background:var(--panel); border:1px dashed var(--kenar); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; color:var(--soluk) }
+  code { background:rgba(127,127,127,.14); padding:1px 5px; border-radius:5px; font-size:12.5px }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <h1>KPSS İlan Ajansı</h1>
+    <p>Kamu kurumlarının ortaöğretim, ön lisans ve lisans alım ilanlarını tek yerde toplar.
+       İl, öğrenim durumu, KPSS puan türü ve puanına göre filtrele; beğendiğin ilana tıkla, kaynak sayfaya git.</p>
+    <div class="ozet" id="ozet"></div>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="panel">
+      <div class="f-bas"><h2>Filtrele</h2><button class="btn" id="temizle" style="padding:4px 9px;font-size:12.5px">temizle</button></div>
+
+      <div class="grp" style="padding-top:0;border-top:0">
+        <label for="q">Anahtar kelime</label>
+        <input id="q" type="search" placeholder="kurum, kadro, şehir…" autocomplete="off" />
+      </div>
+
+      <div class="grp">
+        <label>Öğrenim durumu</label>
+        <div class="cipler" id="fOgrenim"></div>
+      </div>
+
+      <div class="grp">
+        <label>KPSS puan türü <span class="ipucu">P3 · P93 · P94 — bunların dışındakiler “KPSS dışı” listesinde</span></label>
+        <div class="cipler" id="fTur"></div>
+      </div>
+
+      <div class="grp">
+        <label>İlan durumu</label>
+        <div class="cipler" id="fDurum"></div>
+      </div>
+
+      <div class="grp">
+        <label>Kategori</label>
+        <div class="cipler" id="fKat"></div>
+      </div>
+
+      <div class="grp">
+        <label for="il">İl</label>
+        <select id="il"><option value="">Tüm iller</option></select>
+      </div>
+
+      <div class="grp">
+        <label for="minpuan">En az taban puanım: <b id="puanEt">—</b></label>
+        <input id="minpuan" type="range" min="0" max="100" step="1" value="0" style="width:100%" />
+        <label style="display:flex;align-items:center;gap:7px;margin-top:9px;font-weight:400;color:var(--metin);font-size:13px">
+          <input type="checkbox" id="puansiz" style="width:auto" /> puan şartı olmayanları da göster
+        </label>
+      </div>
+
+      <div class="grp">
+        <label for="sirala">Sırala</label>
+        <select id="sirala">
+          <option value="tarih">İlan tarihi (yeni → eski)</option>
+          <option value="son">Son başvuru (yakın → uzak)</option>
+          <option value="kadro">Kadro sayısı (çok → az)</option>
+          <option value="puan">Taban puan (düşük → yüksek)</option>
+        </select>
+      </div>
+
+      <div class="yol">Veriler <b>ilan.memurlar.net</b> üzerinden <code>node scraper.mjs</code>
+        komutuyla tazelenir. Sayfa bu klasördeki JSON dosyalarını okur.</div>
+    </div>
+  </aside>
+
+  <section>
+    <div class="ust">
+      <div class="sekme">
+        <button data-sekme="ilanlar" class="on">İlanlar</button>
+        <button data-sekme="karne">Puan karnesi</button>
+      </div>
+      <div class="sol">
+        <span class="say" id="say"></span>
+      </div>
+    </div>
+
+    <div id="uygularda"></div>
+    <div id="ilanlar" class="kartlar"></div>
+
+    <div id="karne" hidden>
+      <div class="panel" style="overflow:auto;max-height:70vh">
+        <table>
+          <thead><tr><th>Yıl</th><th>Kurum</th><th>Puan türü</th><th class="sayi">Taban</th><th class="sayi">Üst</th><th class="sayi">İlan</th></tr></thead>
+          <tbody id="karneGovde"></tbody>
+        </table>
+      </div>
+      <p class="ozetmetin" style="margin-top:10px">Karnedeki satırlar, çekilen ilanların “en az … puan” şartlarından üretilir; her tazelemede birikir.</p>
+    </div>
+
+    <div id="daha" style="text-align:center;margin-top:16px"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="guncelleme"></span> · Kaynaklar: <a href="https://ilan.memurlar.net/kategori/kpss-b-ilanlari/" target="_blank" rel="noopener">ilan.memurlar.net</a>,
+<a href="https://kamuilan.sbb.gov.tr/" target="_blank" rel="noopener">kamuilan.sbb.gov.tr</a>,
+<a href="https://yerelyonetimler.csb.gov.tr/duyurular" target="_blank" rel="noopener">yerelyonetimler.csb.gov.tr</a>
+    · Bilgiler başvuru kılavuzlarından otomatik çıkarılır; <b>kesin karar için mutlaka kurumun resmî duyurusunu kontrol et.</b>
+    <div id="dipnot"></div>
+  </div>
+</footer>
+
+<script type="module">
+/* ============================ veri yükleme ============================
+   Modüller (type=module) file:// üzerinde çalıştığı için, siteyi çift
+   tıklayarak açtığında da veriyi gömülü kopyadan okur. Sunucu üzerinden
+   açıldığında (ör. node guncelle.mjs --sunucu) önce taze JSON denenir. */
+const V = "./veriler/";
+let ILANLAR = [], KARNE = [], OZET = {};
+const EMBED = JSON.parse(document.getElementById("gommudata").textContent);
+
+/* Sunucu üzerinden (http/https) açıldıysa taze JSON çekilir ve sayfa kendini
+   CANLI_MS aralığıyla kendiliğinden tazeler. Dosyaya çift tıklayarak açtığında
+   (file://) istek yapılmaz, gömülü kopya kullanılır. */
+const SUNUCUDA = location.protocol === "http:" || location.protocol === "https:";
+const CANLI_MS = 10000;
+
+async function dene(dosya) {
+  const r = await fetch(V + dosya + "?t=" + Date.now(), { cache: "no-store" });
+  if (!r.ok) throw 0;
+  return r.json();
+}
+/* Veriyi iki yoldan biriyle getirir:
+   a) veriler/*.json  → kendi sunucundan açtığında (node guncelle.mjs --sunucu)
+   b) sayfanın kendi HTML'indeki gömülü blok → tek dosya olarak yayınlandığında */
+async function gomuluTaze() {
+  const r = await fetch(location.href.split("?")[0] + "?t=" + Date.now(), { cache: "no-store" });
+  if (!r.ok) throw 0;
+  const metin = await r.text();
+  const m = metin.match(/<script id="gommudata" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!m) throw 0;
+  const d = JSON.parse(m[1]);
+  if (!d?.ilanlar?.length) throw 0;
+  return [d.ilanlar, d.karne || [], d.ozet || {}];
+}
+async function veriGet() {
+  try {
+    return await Promise.all([dene("ilanlar.json"), dene("puan-karnesi.json"), dene("ozet.json")]);
+  } catch {
+    return await gomuluTaze();
+  }
+}
+
+let CANLI = false;
+if (SUNUCUDA) {
+  try { [ILANLAR, KARNE, OZET] = await veriGet(); CANLI = true; } catch { }
+}
+if (!ILANLAR?.length) { ILANLAR = EMBED.ilanlar; KARNE = EMBED.karne; OZET = EMBED.ozet; }
+if (ILANLAR?.length) ILANLAR = ILANLAR.map(sinifla); // P3/P93/P94 / KPSS dışı sınıflandırması
+if (!ILANLAR?.length) {
+  document.getElementById("ilanlar").innerHTML =
+    '<div class="panel bos"><b>Veri bulunamadı</b>Aynı klasörde <code>node scraper.mjs</code> çalıştır, sonra sayfayı yenile.</div>';
+}
+
+/* ============================ durum ============================ */
+const S = { q:"", ogrenim:new Set(), tur:new Set(), durum:new Set(["acik"]), kat:new Set(), il:"", minpuan:0, puansiz:true, sirala:"tarih", limit:40 };
+const $ = (s) => document.querySelector(s);
+const tr = (s) => (s||"").toLocaleLowerCase("tr");
+const tarihce = (g) => g ? new Date(g+"T00:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}) : "—";
+const bugun = new Date(); bugun.setHours(0,0,0,0);
+const saat = (g) => g ? Math.round((new Date(g+"T00:00:00") - bugun)/864e5) : null;
+
+/* ============================ seçenekler ============================ */
+const say = (alan, degerFn) => {
+  const m = new Map();
+  for (const i of ILANLAR) for (const d of degerFn(i)) if (d) m.set(d, (m.get(d)||0)+1);
+  return [...m].sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],"tr"));
+};
+/* Çip grubu: çoktan seçmeli. Boş grup = sınırlama yok (Tümü gibi davranır). */
+/* KPSS puan türü süzgeci SADECE üç türü gösterir: P3 (ortaöğretim), P93 (ön lisans),
+   P94 (lisans). Bu üçünün dışındaki bütün ilanlar "KPSS dışı" sekmesindedir.
+   İlanı olmasa bile üç tür de listelenir; yoksa 0 yazar. */
+const UC_TUR = ["P3", "P93", "P94"];
+function sinifla(i) {
+  // veri eski sürümse (puanSinifi yoksa) tarayıcıda hesapla
+  if (i.puanSinifi) return i;
+  const metin = (i.govdeMetni || "") + " " + (i.ozet || "") + " " + (i.baslik || "");
+  const t = new Set((i.puanTurleri || []).map((x) => "P" + +String(x).replace(/\D/g, "")));
+  for (const m of metin.matchAll(/KPSS[\s\S]{0,120}?\bP\s?0?(\d{1,3})\b/gi)) t.add("P" + +m[1]);
+  for (const m of metin.matchAll(/\bP\s?0?(\d{1,3})\b[^.\n]{0,45}?puan\s*t[üu]r[üu]/gi)) t.add("P" + +m[1]);
+  const uc = [...t].filter((x) => UC_TUR.includes(x));
+  if (uc.length) { i.puanSinifi = "kpssli"; i.puanTurleriUC = uc.sort((a, b) => a.length - b.length); i.kpssTuruBiliniyor = true; return i; }
+  if (t.size) { i.puanSinifi = "kpss-disi"; i.puanTurleriUC = []; return i; } // ilanda açıkça başka tür yazıyor
+  if (!/\bkpss\b/i.test(metin) && !i.kpssSartli) { i.puanSinifi = "kpss-disi"; i.puanTurleriUC = []; return i; }
+  const o = i.ogrenim || [];
+  const y = o.includes("Ortaöğretim") ? "P3" : o.includes("Ön lisans") ? "P93" : (o.includes("Lisans") && !o.includes("Lisansüstü")) ? "P94" : null;
+  i.puanSinifi = y ? "kpssli" : "kpss-disi";
+  i.puanTurleriUC = y ? [y] : [];
+  i.kpssTuruBiliniyor = false;
+  return i;
+}
+function turListesi() {
+  const n = { P3: 0, P93: 0, P94: 0, dis: 0 };
+  for (const i of ILANLAR) {
+    for (const t of i.puanTurleriUC || []) if (UC_TUR.includes(t)) n[t]++;
+    if (i.puanSinifi === "kpss-disi") n.dis++;
+  }
+  return [["P3 · ortaöğretim", ["P3", n.P3]], ["P93 · ön lisans", ["P93", n.P93]], ["P94 · lisans", ["P94", n.P94]], ["KPSS dışı", ["dis", n.dis]]];
+}
+function cip(kutu, liste, grup, esleme) {
+  kutu.innerHTML = "";
+  const isaretle = () => kutu.querySelectorAll(".cip").forEach((b) => b.classList.toggle("on", grup.has(b.dataset.v)));
+  for (const [ad, adet] of liste) {
+    const v = esleme ? esleme(ad) : ad;
+    const b = document.createElement("button");
+    b.className = "cip"; b.type = "button"; b.dataset.v = v;
+    b.innerHTML = adet === null ? ad : `${ad} <i>${adet}</i>`;
+    b.onclick = () => { grup.has(v) ? grup.delete(v) : grup.add(v); isaretle(); S.limit = 40; ciz(); };
+    kutu.append(b);
+  }
+  isaretle();
+}
+/* Puan türü çipleri: P3/P93/P94 birbirini dışlar, "KPSS dışı" onlarla birlikte seçilebilir. */
+function turCipleri() {
+  const kutu = $("#fTur");
+  kutu.innerHTML = "";
+  const isaretle = () => kutu.querySelectorAll(".cip").forEach((b) => b.classList.toggle("on", S.tur.has(b.dataset.v)));
+  for (const [ad, [v, adet]] of turListesi()) {
+    const b = document.createElement("button");
+    b.className = "cip"; b.type = "button"; b.dataset.v = v;
+    if (v === "dis") b.title = "KPSS şartı olmayanlar ile P3/P93/P94 dışında puan türü isteyenler (P10, P43, P121 …) ve kendi giriş sınavı olanlar";
+    else b.title = v + " — " + ({ P3: "ortaöğretim KPSS puanı", P93: "ön lisans KPSS puanı", P94: "lisans KPSS puanı" })[v];
+    b.innerHTML = `${ad} <i>${adet}</i>`;
+    b.onclick = () => {
+      if (S.tur.has(v)) S.tur.delete(v);
+      else {
+        if (v !== "dis") S.tur.forEach((x) => x !== "dis" && S.tur.delete(x)); // tek puan türü
+        S.tur.add(v);
+      }
+      isaretle(); S.limit = 40; ciz();
+    };
+    kutu.append(b);
+  }
+  const sifirla = document.createElement("button");
+  sifirla.className = "cip turla"; sifirla.type = "button"; sifirla.textContent = "tür süzgecini kaldır";
+  sifirla.onclick = () => { S.tur.clear(); isaretle(); S.limit = 40; ciz(); };
+  kutu.append(sifirla);
+  isaretle();
+}
+const DURUM_ET = { "Başvuru açık": "acik", "Kapandı": "kapandi", "Tarih belirtilmemiş": "belirsiz" };
+/* Süzgeç seçeneklerini veriden kurar. İlk açılışta bir kez, veri tazelendikçe
+   bir daha çağrılır; kullanıcının seçimi korunur. */
+function secenekler() {
+  cip($("#fOgrenim"), say("ogrenim", i=>i.ogrenim||[]), S.ogrenim);
+  turCipleri();
+  cip($("#fKat"), say("kategori", i=>[i.kategori]), S.kat);
+  cip($("#fDurum"), [["Başvuru açık", null], ["Kapandı", null], ["Tarih belirtilmemiş", null]], S.durum, (ad) => DURUM_ET[ad]);
+  const secili = $("#il").value;
+  $("#il").innerHTML = '<option value="">Tüm iller</option>';
+  for (const [il] of say("iller", i=>i.iller||[])) $("#il").insertAdjacentHTML("beforeend", `<option>${il}</option>`);
+  if ([...$("#il").options].some(o => o.value === secili)) $("#il").value = secili;
+  else { $("#il").value = ""; S.il = ""; }
+}
+secenekler();
+
+/* ============================ süzme ============================ */
+function uygun(i) {
+  if (S.ogrenim.size && !(i.ogrenim||[]).some(o=>S.ogrenim.has(o))) return false;
+  if (S.tur.size) {
+    // seçilen türlerden birini isteyen ilan geçer; "KPSS dışı" seçiliyse o liste de geçerlidir
+    const secilenler = [...S.tur];
+    const turleri = i.puanTurleriUC || [];
+    const uygunTur = turleri.some((t) => secilenler.includes(t));
+    const uygunDis = S.tur.has("dis") && (i.puanSinifi || "kpss-disi") === "kpss-disi";
+    if (!uygunTur && !uygunDis) return false;
+  }
+  if (S.kat.size && !S.kat.has(i.kategori)) return false;
+  if (S.il && !(i.iller||[]).includes(S.il)) return false;
+  if (S.q) { const a = i.arama || tr([i.baslik,i.kurum,(i.unvanlar||[]).join(" ")].join(" "));
+    if (!S.q.toLowerCase("tr").split(/\s+/).every(k=>a.includes(k))) return false; }
+  const g = saat(i.sonBasvuru);
+  if (S.durum.size && !S.durum.has(i.durum)) return false;
+  if (S.minpuan > 0) {
+    if (i.minPuan === null || i.minPuan === undefined) { if (!S.puansiz) return false; }
+    else if (i.minPuan > S.minpuan) return false;
+  }
+  return true;
+}
+const karsilastir = {
+  tarih: (a,b)=> (b.tarih||"").localeCompare(a.tarih||""),
+  son:   (a,b)=> (a.sonBasvuru||"9999").localeCompare(b.sonBasvuru||"9999"),
+  kadro: (a,b)=> (b.kontenjan||0)-(a.kontenjan||0),
+  puan:  (a,b)=> (a.minPuan||999)-(b.minPuan||999),
+};
+
+/* ============================ çizim ============================ */
+function durumEtiketi(i) {
+  const g = saat(i.sonBasvuru);
+  if (i.durum === "kapandi") return ["d-kapali","Kapandı"];
+  if (g === null) return ["d-bel","Tarih belirtilmemiş"];
+  if (g <= 2) return ["d-son", g === 0 ? "Son gün!" : g + " gün kaldı"];
+  return ["d-acik","Başvuru açık"];
+}
+function kart(i) {
+  const [sinf, yazi] = durumEtiketi(i);
+  const et = [];
+  if (i.kontenjan) et.push(`<span class="et kadro">${i.kontenjan} kişi</span>`);
+  (i.unvanlar||[]).slice(0,3).forEach(u=>et.push(`<span class="et unvan">${u}</span>`));
+  if (i.minPuan) et.push(`<span class="et puan">en az ${i.minPuan} puan</span>`);
+  /* puan türü etiketi: ya P3/P93/P94, ya "KPSS puanı şartı var", ya "KPSS dışı" */
+  if ((i.puanTurleriUC || []).length) (i.puanTurleriUC || []).forEach((t) => et.push(i.kpssTuruBiliniyor === false
+    ? `<span class="et tur" title="İlanda puan türü açıkça yazmıyor; öğrenim durumuna göre tahmin edildi. Kaynak sayfadan doğrulayın.">${t}?</span>`
+    : `<span class="et tur">${t}</span>`));
+  else if ((i.puanSinifi || "kpss-disi") === "kpssli") et.push(`<span class="et" title="İlanda P3/P93/P94 açıkça yazmıyor; öğrenim durumuna göre tür belli değil">KPSS puanı şartı var</span>`);
+  else et.push(`<span class="et dis">KPSS dışı</span>`);
+  (i.ogrenim||[]).filter(o=>o!=="Belirtilmemiş").slice(0,3).forEach(o=>et.push(`<span class="et">${o}</span>`));
+  if (i.iller?.length) et.push(`<span class="et">${i.iller.slice(0,3).join(", ")}${i.iller.length>3?" …":""}</span>`);
+  if (i.sonBasvuru) et.push(`<span class="et tarih">son başvuru ${tarihce(i.sonBasvuru)}</span>`);
+  if (i.yontem) et.push(`<span class="et">${i.yontem}</span>`);
+  const metinZayif = (i.ogrenim || []).join() === "Belirtilmemiş" && !i.minPuan;
+  if (metinZayif) et.push(`<span class="et" title="Bu ilanın metni kurum tarafından görsel (resim) olarak yayımlanmış; şartlar kaynak sayfada görülebilir.">şartlar görselde · kaynakta bakın</span>`);
+  const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  return `<article class="ilan" data-url="${i.url}">
+    <span class="durum ${sinf}">${yazi}</span>
+    <h3><a href="${i.url}" target="_blank" rel="noopener">${esc(i.baslik)}</a></h3>
+    ${i.kurum ? `<div class="kurum">${esc(i.kurum)}</div>` : ""}
+    <div class="etiketler">${et.join("")}</div>
+    ${i.ozet ? `<p class="ozetmetin">${esc(i.ozet).slice(0,230)}${i.ozet.length>230?"…":""}</p>` : ""}
+    <div class="alt"><span>${i.kategori} · ilan tarihi ${tarihce(i.tarih)}${i.kaynak?" · kaynak: "+esc(i.kaynak):""}</span>
+      <a class="git" href="${i.url}" target="_blank" rel="noopener">İlanı kaynak sayfada aç →</a></div>
+  </article>`;
+}
+function ciz() {
+  const liste = ILANLAR.filter(uypun).sort(karsilastir[S.sirala]);
+  const gorunen = liste.slice(0, S.limit);
+  $("#ilanlar").innerHTML = gorunen.length ? gorunen.map(kart).join("")
+    : `<div class="panel bos"><b>Bu filtrelerle ilan yok</b>Öğrenim/puan şartını gevşetmeyi ya da “puan şartı olmayanları da göster” seçeneğini dene.</div>`;
+  $("#say").textContent = liste.length ? `${liste.length} ilan listeleniyor` : "";
+  $("#daha").innerHTML = liste.length > S.limit
+    ? `<button class="btn" id="dahaBtn">Daha göster (${liste.length - S.limit} kaldı)</button>` : "";
+  const db = $("#dahaBtn"); if (db) db.onclick = () => { S.limit += 40; ciz(); };
+  $("#ilanlar").querySelectorAll(".ilan").forEach(k => k.onclick = (e) => {
+    if (e.target.closest("a")) return;
+    window.open(k.dataset.url, "_blank", "noopener");
+  });
+  const g = ILANLAR.filter(uypun).filter(i=>i.sonBasvuru && saat(i.sonBasvuru)!==null && saat(i.sonBasvuru)>=0 && saat(i.sonBasvuru)<=3);
+  $("#uygularda").innerHTML = g.length
+    ? `<div class="uygularda">⏰ <b>Başvuru süresi dolmak üzere:</b> ${g.length} ilan son 3 gün içinde kapanıyor —
+        ${g.slice(0,3).map(i=>i.baslik).join(" · ")}${g.length>3?" …":""}</div>` : "";
+}
+const uypun = uygun;
+
+function ozetGoster() {
+  const asgari = (i)=> i.ogrenim?.includes("Ortaöğretim");
+  const acik = ILANLAR.filter(i=>i.durum==="acik");
+  const yakin = acik.filter(i=>saat(i.sonBasvuru)!==null && saat(i.sonBasvuru)<=7);
+  const kadro = ILANLAR.reduce((t,i)=>t+((i.kontenjan||0)<20000?(i.kontenjan||0):0),0);
+  const orta = ILANLAR.filter(asgari);
+  const ortaAcik = orta.filter(i=>i.durum==="acik");
+  const kare = (b, s, ip) => `<div class="kutu"><b>${b}</b><span>${s}</span></div>`;
+  $("#ozet").innerHTML =
+    kare(acik.length, "başvurusu açık ilan") +
+    kare(kadro.toLocaleString("tr-TR"), "toplam kontenjan") +
+    kare(orta.length, "ortaöğretim alımı") +
+    kare(ILANLAR.filter(i=>(i.ogrenim||[]).includes("Ön lisans")&&i.durum==="acik").length, "ön lisans alımı") +
+    kare(yakin.length, "son 7 günde kapanıyor") +
+    (OZET.guncellemeYazi ? kare(OZET.guncellemeYazi.slice(0,10), "veri tarihi") : "");
+  $("#guncelleme").textContent = OZET.guncellemeYazi ? "Son veri çekimi: " + OZET.guncellemeYazi : "";
+}
+
+/* ============================ puan karnesi ============================ */
+function karneCiz() {
+  const s = [...KARNE].sort((a,b)=> (b.yil-a.yil) || (b.min-a.min));
+  const esc = (x)=>String(x??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  $("#karneGovde").innerHTML = s.length ? s.map(k=>
+    `<tr><td>${esc(k.yil)}</td><td>${esc(k.kurum)}</td><td>${esc(k.puanTuru)}</td>
+     <td class="sayi">${k.min}</td><td class="sayi">${k.ust}</td><td class="sayi">${k.ilan}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="bos">Henüz puan bilgisi çekilmedi — birkaç tazelemeden sonra birikir.</td></tr>`;
+}
+
+/* ============================ olaylar ============================ */
+let bekle;
+$("#q").oninput = (e) => { clearTimeout(bekle); bekle = setTimeout(()=>{ S.q = e.target.value; S.limit=40; ciz(); }, 120); };
+$("#il").onchange = (e) => { S.il = e.target.value; S.limit = 40; ciz(); };
+$("#sirala").onchange = (e) => { S.sirala = e.target.value; ciz(); };
+$("#puansiz").onchange = (e) => { S.puansiz = e.target.checked; ciz(); };
+$("#minpuan").oninput = (e) => { S.minpuan = +e.target.value; $("#puanEt").textContent = S.minpuan || "—"; ciz(); };
+$("#temizle").onclick = () => location.reload();
+document.querySelectorAll(".sekme button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".sekme button").forEach(x=>x.classList.toggle("on", x===b));
+  const karneModu = b.dataset.sekme === "karne";
+  $("#karne").hidden = !karneModu;
+  $("#ilanlar").hidden = karneModu; $("#daha").hidden = karneModu; $("#uygularda").hidden = karneModu;
+  $("#say").style.visibility = karneModu ? "hidden" : "visible";
+});
+
+ozetGoster(); karneCiz(); ciz();
+
+/* ============================ canlı tazeleme ============================
+   Sayfa, kendi veri dosyasını CANLI_MS'de bir yeniden çeker. Değişen bir şey
+   yoksa ekran hiç oynanmaz; değiştiyse süzgeçler korunarak yeniden çizilir.
+   Sekme arka plandayken bekler, göründüğü an hemen dener. */
+let imza = ILANLAR.length + "|" + (OZET.guncelleme || "");
+let deneme = 0, sonKontrol = null;
+const saniye = (ms) => Math.max(1, Math.round(ms / 1000));
+const CANLI_YAZI = () => "sayfa her " + saniye(CANLI_MS) + " saniyede bir kendiliğinden tazeleniyor";
+
+function durumSatiri(yazi) {
+  const e = $("#guncelleme");
+  if (e) e.textContent = yazi;
+}
+
+async function tazele() {
+  if (!CANLI) return;
+  deneme++;
+  sonKontrol = new Date();
+  durumSatiri("Veri kontrol ediliyor…");
+  try {
+    const [a, k, o] = await veriGet();
+    const yeniImza = a.length + "|" + (o.guncelleme || "");
+    if (yeniImza !== imza) {
+      imza = yeniImza; ILANLAR = a.map(sinifla); KARNE = k; OZET = o;
+      secenekler(); ozetGoster(); karneCiz(); ciz();
+      durumSatiri("Yeni veri geldi — " + ILANLAR.length + " ilan · çekim: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
+    } else {
+      durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
+    }
+  } catch {
+    durumSatiri("Veriye ulaşılamadı, sonraki denemede tekrar deneniyor…");
+  }
+}
+
+if (CANLI) {
+  durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
+  setInterval(() => { if (!document.hidden) tazele(); }, CANLI_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tazele(); });
+} else {
+  durumSatiri("Bu kopya dosyadan açıldı (gömülü veri) · tazelemek için ilanlari-guncelle.bat");
+}
+
+/* Dipnot: hangi kaynak, ne zaman tarandı, adresi. Liste veriden üretilir; sayfa
+   yenilendiğinde tarih de kendiliğinden tazelenir. */
+const KAYNAKLAR = [
+  ["memurlar.net", "ilan kategorileri: KPSS-B, 4/B sözleşmeli, işçi, akademik, KPSS-A, kalkınma ajansları, SYDV", "https://ilan.memurlar.net/kategori/kpss-b-ilanlari/"],
+  ["kamuilan.sbb.gov.tr", "T.C. Cumhurbaşkanlığı Kamuilan portalı", "https://kamuilan.sbb.gov.tr/"],
+  ["yerelyonetimler.csb.gov.tr", "belediye ve il özel idareleri duyuruları", "https://yerelyonetimler.csb.gov.tr/KamuPersonelAlimlari.aspx"],
+];
+const dn = document.getElementById("dipnot");
+if (dn) dn.innerHTML = "<br>Sitedeki ilanlar bu kaynaklardan toplanır; karta tıkladığınızda ilgili kaynağın kendi sayfası yeni sekmede açılır. "
+  + "Kartlardaki <b>Resmî Gazete</b>, <b>İŞKUR</b>, <b>Kamuilan</b> gibi etiketler ilanın kökenini gösterir.<br>"
+  + KAYNAKLAR.map(([ad, aciklama, url]) => "&middot; <a href=\"" + url + "\" target=\"_blank\" rel=\"noopener nofollow\"><b>" + ad + "</b></a>"
+      + ' <span style="color:#7c8798">(' + aciklama + " &middot; son tarama " + (OZET.guncellemeYazi || "") + ")</span>")
+      .join("<br>");
+</script>
+
+<!--GOMULU-BASLA-->
+<script id="gommudata" type="application/json">{"ilanlar":[],"karne":[],"ozet":{}}</script>
+<!--GOMULU-BITIS-->
+</body>
+</html>
