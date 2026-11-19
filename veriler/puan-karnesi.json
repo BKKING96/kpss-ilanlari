@@ -1,0 +1,38 @@
+[
+ {
+  "yil": "2026",
+  "kurum": "Yükseköğretim Kalite Kurulu",
+  "puanTuru": "P94",
+  "min": 75,
+  "ust": 75,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Yıldız Teknik Üniversitesi",
+  "puanTuru": "P3",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Sayıştay Başkanlığı",
+  "puanTuru": "P93",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Kamu İhale Kurumu",
+  "puanTuru": "P94",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ }
+]
