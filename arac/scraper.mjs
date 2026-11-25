@@ -472,9 +472,13 @@ async function isle() {
 }
 
 /* --------------------------------------------------------- liste → kayıt --- */
-/* Bir liste sayfasının içeriğini kayıtlara ekler. Aynı ilan iki listede
-   geçerse tek kayıt kalır; süresi geçen listede görmek o ilanın yayından
-   kalktığını gösterir (yayinda = false). Dönen değer: yeni kayıt sayısı.    */
+/* Bir liste sayfasının içeriğini kayıtlara ekler. Aynı ilan birkaç listede
+   geçerse tek kayıt kalır ve süresi GEÇMEMİŞ listede görüldüyse "yayinda"
+   işareti korunur. (Süresi geçen listede görünmesi tek başına "yayından
+   kalktı" demek değildir: aynı ilan başka kategorinin canlı listesinde
+   duruyor olabilir; bu yüzden yayinda bayrağı burada ASLA false yapılmaz —
+   kapanış kararı son başvuru tarihine göre yaz() içinde verilir.)
+   Dönen değer: yeni kayıt sayısı.                                          */
 function listelerdenYukle(kayitlar, html, kategori, { gecen = false, gecenAlinsin = false } = {}) {
   let yeni = 0;
   for (const il of listeyiOku(html, kategori)) {
@@ -525,8 +529,14 @@ async function ekKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = {}
   }
 
   // aynı ilanın iki kaynakta çıkma ihtimali: parmak izi eşleşirse mevcut kaydı zenginleştir
+  // Yalnızca son ~120 günün kayıtları kullanılır: aynı kurum iki yıl üst üste
+  // "50 işçi alımı" ilan ederse yeni ilan yıllar önceki KAPANDI kayıtla birleşmesin.
   const izler = new Map();
-  for (const k of Object.values(kayitlar)) { const p = parmakIzi(k); if (p && !izler.has(p)) izler.set(p, k); }
+  const esikTarih = new Date(Date.parse(bugunTR() + "T00:00:00Z") - 120 * 864e5).toISOString().slice(0, 10);
+  for (const k of Object.values(kayitlar)) {
+    if ((k.tarih || "0000") < esikTarih) continue;
+    const p = parmakIzi(k); if (p && !izler.has(p)) izler.set(p, k);
+  }
   let eklenen = 0, birlesen = 0, tekrar = 0;
   const gorulenId = new Set();
   for (const y of yeni) {
@@ -554,14 +564,24 @@ async function ekKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = {}
       eklenen++;
     }
   }
-  return { sbb: !!sbbHtml, csb: !!sbbHtml && csbSayfaSayisi > 0, csbSayfa: csbSayfaSayisi, eklenen, birlesen, tekrar };
+  /* Eski turlardan biriken mükerrer SBB kayıtları: SBB bağlantı kodlarını her
+     çekilişte değiştirdiği için aynı ilanın eski kimlikleri dosyada kalıyordu.
+     Bugünkü listeyle aynı içerikse eski kayıt silinir (yeni tek kayıt kalır). */
+  const icerikAnahtari = (k) => ((k.kurum || "") + "|" + (k.baslik || "")).toLocaleLowerCase("tr").replace(/\s+/g, " ").trim();
+  const bugunkuSbb = new Set(yeni.filter((y) => y.kategoriSlug === "kamuilan-sbb").map(icerikAnahtari));
+  let silinen = 0;
+  for (const [id, k] of Object.entries(kayitlar)) {
+    if (k.kategoriSlug !== "kamuilan-sbb") continue;
+    if (bugunkuSbb.has(icerikAnahtari(k)) && !yeni.some((y) => y.id === id)) { delete kayitlar[id]; silinen++; }
+  }
+  return { sbb: !!sbbHtml, csb: csbSayfaSayisi > 0, csbSayfa: csbSayfaSayisi, eklenen, birlesen, tekrar, silinen };
 }
 
 /* günlüğe satır ekle: süreç beklenmedik biçimde kapanırsa iz kalması için */
 async function izMesaji(s) {
   try {
     const { appendFile } = await import("node:fs/promises");
-    await appendFile(path.join(BURADAN, "guncelleme-loğu.txt"), `${new Date().toLocaleString("tr-TR")}  ${s}\n`, "utf8");
+    await appendFile(path.join(BURADAN, "guncelleme-loğu.txt"), `${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}  ${s}\n`, "utf8");
   } catch { /* log yazılamazsa sorun değil */ }
 }
 
@@ -613,7 +633,7 @@ async function ana() {
   // 3) ek kaynaklar: Kamu İlanları (SBB) ve Yerel Yönetimler (CSB)
   const ek = await ekKaynaklariBirlestir(kayitlar, { indir: true, butce: Math.max(0, kalanZaman() - 25000) });
   console.log("  3/4  Ek kaynaklar: Kamu İlanları " + (ek.sbb ? "okundu" : "alınamadı") + ", Yerel Yönetimler " + (ek.csb ? ek.csbSayfa + " sayfa okundu" : "alınamadı") +
-    " → " + ek.eklenen + " yeni, " + ek.birlesen + " birleşti");
+    " → " + ek.eklenen + " yeni, " + ek.birlesen + " birleşti" + (ek.silinen ? ", " + ek.silinen + " mükerrer temizlendi" : ""));
   await yaz(kayitlar);
 
   // 4) ilan detayları (memurlar.net sayfaları + yerel yönetim duyuru metinleri)
