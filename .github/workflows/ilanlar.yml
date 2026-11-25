@@ -19,7 +19,7 @@ concurrency:
 jobs:
   tara:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -41,14 +41,17 @@ jobs:
           KPSS_CACHE: ${{ github.workspace }}/arac/cache
           KPSS_VERI: ${{ github.workspace }}/veriler
           KPSS_PAKETLE: "0"
-          BUTCE_SN: "600"
+          BUTCE_SN: "330"
         run: |
           mkdir -p "$KPSS_CACHE" "$KPSS_VERI"
+          # önblekten gelen artıklar bu turu kilitlemesin
+          rm -f "$KPSS_CACHE/_calisiyor" "$KPSS_CACHE/_devam"
           for i in 1 2 3; do
             node arac/scraper.mjs || true
             if [ ! -f "$KPSS_CACHE/_devam" ]; then echo "tarama tamam"; break; fi
             echo "tarama sürüyor — tur $i bitti, devam ediliyor"
           done
+          rm -f "$KPSS_CACHE/_calisiyor" "$KPSS_CACHE/_devam"
 
       - name: Değişen veriyi GitHub'a işle
         run: |
@@ -64,4 +67,5 @@ jobs:
             exit 0
           fi
           git commit -m "ilanlar güncellendi (bulut taraması) [skip ci]"
-          git push || { git fetch origin main && git reset --soft origin/main && git add -A && git commit --amend --no-edit && git push; }
+          # başkası (örn. senin bilgisayarın) bu arada yazdıysa üstüne koy, ezme
+          git push || { git fetch origin main && git rebase origin/main && git push; }
