@@ -10,10 +10,64 @@
  },
  {
   "yil": "2026",
+  "kurum": "Ankara Yıldırım Beyazıt Üniversitesi",
+  "puanTuru": "P3",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Adli Tıp Kurumu",
+  "puanTuru": "P3",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Belirtilmemiş"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Adli Tıp Kurumu",
+  "puanTuru": "P93",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Belirtilmemiş"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Adli Tıp Kurumu",
+  "puanTuru": "P94",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Belirtilmemiş"
+ },
+ {
+  "yil": "2026",
   "kurum": "Yıldız Teknik Üniversitesi",
   "puanTuru": "P3",
   "min": 70,
   "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Jandarma Genel Komutanlığı",
+  "puanTuru": "P3",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Jandarma Genel Komutanlığı",
+  "puanTuru": "P94",
+  "min": 60,
+  "ust": 60,
   "ilan": 1,
   "ogrenim": "Lisans"
  },
