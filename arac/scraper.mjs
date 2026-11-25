@@ -22,7 +22,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sbbAyristir, csbListeyiOku, parmakIzi } from "./ek-kaynaklar.mjs";
+import { sbbAyristir, csbListeyiOku, parmakIzi, bugunTR } from "./ek-kaynaklar.mjs";
 
 const BURADAN = path.dirname(fileURLToPath(import.meta.url));
 /* KPSS_CACHE / KPSS_VERI: bulut (GitHub Actions) çalışırken yolları dışarıdan
@@ -371,7 +371,7 @@ function puanSinifi(i, govde) {
 }
 
 async function yaz(kayitlar) {
-  const bugun = new Date().toISOString().slice(0, 10);
+  const bugun = bugunTR(); // Türkiye takvimi (bulut UTC'de çalışsa da doğru)
   const liste = Object.values(kayitlar).map((i) => {
     const gecti = i.sonBasvuru ? i.sonBasvuru < bugun : null;
     const sinif = puanSinifi(i, i.govdeMetni);
@@ -408,7 +408,9 @@ async function yaz(kayitlar) {
 
   const ozet = {
     guncelleme: new Date().toISOString(),
-    guncellemeYazi: new Date().toLocaleString("tr-TR"),
+    /* Türkiye saatiyle yaz: bulut sunucusu UTC'de çalışıyor, yoksa sitedeki
+       "veri tarihi" 3 saat geride görünürdü. */
+    guncellemeYazi: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
     toplam: liste.length,
     acik: liste.filter((i) => i.durum === "acik").length,
     ortaogretim: liste.filter((i) => (i.ogrenim || []).includes("Ortaöğretim")).length,
@@ -479,7 +481,7 @@ function listelerdenYukle(kayitlar, html, kategori, { gecen = false, gecenAlinsi
     const eski = kayitlar[il.id];
     if (eski) { if (!gecen) eski.yayinda = true; continue; }
     if (gecen && !gecenAlinsin) continue; // ilk seferde süresi geçmiş ilanlar alınmaz
-    kayitlar[il.id] = { ...il, yayinda: !gecen, detayVar: false, eklendi: new Date().toISOString().slice(0, 10) };
+    kayitlar[il.id] = { ...il, yayinda: !gecen, detayVar: false, eklendi: bugunTR() };
     yeni++;
   }
   return yeni;
