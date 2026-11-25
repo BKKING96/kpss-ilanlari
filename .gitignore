@@ -1,0 +1,6 @@
+# Depoya girmeyecekler (tarama geçici dosyaları)
+arac/cache/
+arac/guncelleme-loğu.txt
+arac/guncelleme-logu.txt
+node_modules/
+*.log
