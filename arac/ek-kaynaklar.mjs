@@ -41,11 +41,22 @@ function aralik(data, bugun) {
   if (son && baslangic && son < baslangic) son = iso(b, yil + 1);
   return { baslangic, sonBasvuru: son };
 }
-function yeniEksi(iso, gun) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() - gun);
-  return d.toISOString().slice(0, 10);
+/* BUGÜN — Türkiye takvimi. new Date().toISOString() kullanılırsa bulut
+   sunucusunda (UTC) gece 00:00-02:59 arasında dün görünür; ayrıca
+   new Date(y,m,d).toISOString() Türkiye'de bir gün geri kayar.
+   Bu yüzden tarihler saat diliminden bağımsız üretilir.               */
+export function bugunTR(tarih = new Date()) {
+  const p = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(tarih);
+  const al = (t) => p.find((x) => x.type === t)?.value;
+  return `${al("year")}-${al("month")}-${al("day")}`;
 }
+/* gün ekle/çıkar → ISO tarih (UTC üzerinde hesaplanır, kayma olmaz) */
+function gunEkle(iso, gun) {
+  const [y, a, g] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, a - 1, g) + gun * 864e5).toISOString().slice(0, 10);
+}
+function yeniEksi(iso, gun) { return gunEkle(iso, -gun); }
 
 /* ------------------------------------------------- Kamu İlanları (SBB) ----
    25 Kasım 2026'da site yapısı değişti; iki biçim birlikte desteklenir.
@@ -59,7 +70,7 @@ function yeniEksi(iso, gun) {
    Değişiklikten sonra katı "span" deseni 116 ilanın yalnızca 27'sini
    görebiliyordu; aşağıdaki bağlantı-merkezli okuma 89 yeni biçimi de alır.  */
 export function sbbAyristir(html, Y) {
-  const bugun = new Date().toISOString().slice(0, 10);
+  const bugun = bugunTR();
   const cikti = [];
   const gorulen = new Set();
 
@@ -68,10 +79,10 @@ export function sbbAyristir(html, Y) {
   for (const m of html.matchAll(/<time[^>]*class=['"][^'"]*cbp_tmtime[^'"]*['"][^>]*>\s*<h4>\s*(\d{1,2})\s*<\/h4>\s*<h3>\s*([^<]{3,20}?)\s*<\/h3>/gi)) {
     const gun = +m[1], ay = AYLAR[Y.temiz(m[2]).toLocaleLowerCase("tr")];
     if (!gun || !ay) continue;
-    const b = new Date(bugun + "T00:00:00");
-    const d = new Date(b.getFullYear(), ay - 1, gun);
-    if (d - b > 45 * 864e5) d.setFullYear(d.getFullYear() - 1); // yılbaşı geçişi
-    zamanlar.push({ index: m.index, iso: d.toISOString().slice(0, 10) });
+    const yil = +bugun.slice(0, 4);
+    let iso = `${yil}-${String(ay).padStart(2, "0")}-${String(gun).padStart(2, "0")}`;
+    if (iso > gunEkle(bugun, 45)) iso = `${yil - 1}-${String(ay).padStart(2, "0")}-${String(gun).padStart(2, "0")}`; // yılbaşı geçişi
+    zamanlar.push({ index: m.index, iso });
   }
   const tarihBul = (index) => {
     let son = null;
@@ -141,7 +152,7 @@ export function sbbAyristir(html, Y) {
      <div class="date"><span><i> 17</i> Kasım 2026</span><p>Salı</p></div>
      <div class="info truncate-text-3"><p>MUDURNU BELEDİYE ... İLANI...</p></div>   */
 export function csbListeyiOku(html, Y) {
-  const bugun = new Date().toISOString().slice(0, 10);
+  const bugun = bugunTR();
   const cikti = [], gorulen = new Set();
   for (const m of html.matchAll(/href="(https:\/\/yerelyonetimler\.csb\.gov\.tr\/([a-z0-9\-çğıöşü]+)-duyuru-(\d+))"/gi)) {
     const url = m[1], id = m[3];
