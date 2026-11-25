@@ -1,0 +1,67 @@
+name: ilanlari-guncelle
+# KPSS İlan Ajansı — bulut taraması.
+# Bilgisayar kapalıyken de ilanlar güncellensin diye bu iş GitHub'ın
+# ücretsiz sunucularında çalışır. Yerel klasördeki scraper.mjs'in aynısı
+# (arac/ klasöründe) çalışır, çıkan veriler/ dosyaları depoya işlenir;
+# site bu dosyalardan kendini tazeler. Hiçbir gizli anahtar gerekmez.
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *" # saat başı 4 kez (UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ilanlari-guncelle
+  cancel-in-progress: false
+
+jobs:
+  tara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ilan detay sayfalarını her turda yeniden indirmemek için önbellek
+      - name: Önbelleği geri yükle
+        uses: actions/cache@v4
+        with:
+          path: arac/cache
+          key: kpss-onek-${{ github.run_id }}
+          restore-keys: |
+            kpss-onek-
+
+      - name: İlanları tara
+        env:
+          KPSS_CACHE: ${{ github.workspace }}/arac/cache
+          KPSS_VERI: ${{ github.workspace }}/veriler
+          KPSS_PAKETLE: "0"
+          BUTCE_SN: "600"
+        run: |
+          mkdir -p "$KPSS_CACHE" "$KPSS_VERI"
+          for i in 1 2 3; do
+            node arac/scraper.mjs || true
+            if [ ! -f "$KPSS_CACHE/_devam" ]; then echo "tarama tamam"; break; fi
+            echo "tarama sürüyor — tur $i bitti, devam ediliyor"
+          done
+
+      - name: Değişen veriyi GitHub'a işle
+        run: |
+          git config user.name "kpss-ilan-botu"
+          git config user.email "41898282+bkking96@users.noreply.github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add veriler
+          # yalnız ilan listesi gerçekten değişince sürüm oluştur
+          # (ozet.json'daki saat damgası her tur değişir; gürültü olmasın)
+          if git diff --cached --quiet -- veriler/ilanlar.json veriler/puan-karnesi.json; then
+            echo "İlan içeriği değişmedi; yeni sürüm gerekmiyor."
+            exit 0
+          fi
+          git commit -m "ilanlar güncellendi (bulut taraması) [skip ci]"
+          git push || { git fetch origin main && git reset --soft origin/main && git add -A && git commit --amend --no-edit && git push; }
