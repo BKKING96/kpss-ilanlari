@@ -23,6 +23,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { sbbAyristir, csbListeyiOku, parmakIzi, bugunTR } from "./ek-kaynaklar.mjs";
+import { YENI_KAYNAKLAR, yeniKaynakAdresleri, yeniKaynakMi, kaynaklariOku, kayitYasliMi, kartDetayAdresleri, kartDetayUygula } from "./yeni-kaynaklar.mjs";
 
 const BURADAN = path.dirname(fileURLToPath(import.meta.url));
 /* KPSS_CACHE / KPSS_VERI: bulut (GitHub Actions) çalışırken yolları dışarıdan
@@ -49,6 +50,7 @@ const listeMi = (u) =>
   /\/kategori\//.test(u) ||
   /\/duyurular(\/\d+)?\/?$/.test(u) ||
   /^https:\/\/kamuilan\.sbb\.gov\.tr\/?$/.test(u) ||
+  yeniKaynakMi(u) ||            // derleyici sitelerin liste/API adresleri de hızlı tazelenir
   u === BASE + "/";
 const esikMs = (u) => (listeMi(u) ? TAZE_LISTE_MS : TAZE_DETAY_MS);
 
@@ -326,6 +328,49 @@ async function onekOku(url) {
   try { return JSON.parse(await readFile(dosya, "utf8")).html; } catch { return null; }
 }
 
+/* Aynı ilanın iki kaynakta açılan kopyalarını kapatır.
+   parmakIzi() kurum + ünvan + sayı üzerinden çalıştığı için eşleşme güçlüdür,
+   ama ilan tahtalarında aynı kurumun aynı sayıda personeli AYNI AY içinde iki
+   kez aradığı da oluyor; bu yüzden başvuru tarihinin de yakın olması istenir.
+   Kalan kayıt "en dolu" olandır: detayı okunmuş, kurumu ve ilanı bilinen.   */
+function mukerrerleriAyikla(kayitlar) {
+  const esik = new Date(Date.parse(bugunTR() + "T00:00:00Z") - 120 * 864e5).toISOString().slice(0, 10);
+  const gruplar = new Map();
+  for (const [id, k] of Object.entries(kayitlar)) {
+    if ((k.tarih || "0000") < esik) continue;
+    const p = parmakIzi(k);
+    if (!p) continue;
+    if (!gruplar.has(p)) gruplar.set(p, []);
+    gruplar.get(p).push([id, k]);
+  }
+  const doluluk = (k) =>
+    (k.detayVar ? 4 : 0) + (String(k.id).match(/^\d+$/) ? 2 : 0) +   // memurlar.net sayfası en dolu kaynaktır
+    (k.sonBasvuru ? 1 : 0) + (k.kurum ? 1 : 0) + ((k.iller || []).length ? 1 : 0) + ((k.puanTurleri || []).length ? 1 : 0);
+  let kaldirilan = 0;
+  for (const grup of gruplar.values()) {
+    if (grup.length < 2) continue;
+    grup.sort((a, b) => doluluk(b[1]) - doluluk(a[1]));
+    const [, bir] = grup[0];
+    for (const [id, k] of grup.slice(1)) {
+      /* Tek başına parmak izi yetmez: aynı kurum aynı sayıda kişiyi aynı hafta
+         İKİ farklı kadro için arıyor olabilir. Kayıtların aynı ilan olduguna
+         hükmetmek için basvuru tarihinin de (yoksa yayim tarihinin) ayni
+         olması — en fazla bir gün farkla — aranır.                     */
+      const gunFarki = (a, b) => (a && b ? Math.abs(Date.parse(a) - Date.parse(b)) : Infinity);
+      const tarihYakin = gunFarki(bir.sonBasvuru, k.sonBasvuru) <= 864e5 || gunFarki(bir.tarih, k.tarih) <= 864e5;
+      if (!tarihYakin) continue;
+      if (!bir.kurum && k.kurum) bir.kurum = k.kurum;
+      if (!bir.sonBasvuru && k.sonBasvuru) bir.sonBasvuru = k.sonBasvuru;
+      if (!bir.kontenjan && k.kontenjan) bir.kontenjan = k.kontenjan;
+      if (!bir.ozetUrl && k.ozetUrl) bir.ozetUrl = k.ozetUrl;
+      if (!bir.yayinda && k.yayinda) bir.yayinda = true;
+      delete kayitlar[id];
+      kaldirilan++;
+    }
+  }
+  return kaldirilan;
+}
+
 /* ------------------------------------------------- sonuç dosyalarını yaz ---- */
 /* kaynak etiketini tek biçime getir (kaynak metninde "işkur" / "İşkur" karışık geçiyor) */
 function kaynakce(k) {
@@ -577,6 +622,96 @@ async function ekKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = {}
   return { sbb: !!sbbHtml, csb: csbSayfaSayisi > 0, csbSayfa: csbSayfaSayisi, eklenen, birlesen, tekrar, silinen };
 }
 
+/* ------------------------------------- derleyici (aggregator) kaynaklar ---- */
+/* kadroatlasi / kariyerbankasi / kamumemuralimi / kamualimlari / memurjet.
+   Bu siteler Resmî Gazete, Kariyer Kapısı ve İŞKUR ilanlarını derliyor; kendi
+   kayıtları yok ama METİNLERİ ulaşılabilir. Aynı ilan memurlar.net'te de varsa
+   yeni kayıt açılmaz, mevcut kayıt tamamlanır (parmak izi eşleşmesiyle).     */
+async function yeniKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = {}) {
+  const Y = { temiz, tarih, illeriBul, ogrenimBul, ogrenimBulKisa: ogrenimBul, UNVANLAR, KURUM_DESEN, bugun: () => bugunTR() };
+  const adresler = yeniKaynakAdresleri();
+  if (indir && butce > 8000) isci(adresler, Math.max(0, butce - 5000));
+
+  const icerikler = {};
+  for (const u of adresler) { const h = await onekOku(u); if (h) icerikler[u] = h; }
+
+  // aynı ilanın memurlar.net/SBB kaydısıyla çakışmaması için parmak izi haritası
+  const esikTarih = new Date(Date.parse(bugunTR() + "T00:00:00Z") - 120 * 864e5).toISOString().slice(0, 10);
+  const izler = new Map();
+  for (const k of Object.values(kayitlar)) {
+    if ((k.tarih || "0000") < esikTarih) continue;
+    const p = parmakIzi(k); if (p && !izler.has(p)) izler.set(p, k);
+  }
+
+  let eklenen = 0, birlesen = 0, okunanKaynak = 0;
+  const kaynakDurum = [];
+  for (const k of YENI_KAYNAKLAR) {
+    let yeni = [];
+    try { yeni = kaynaklariOku(k, icerikler, Y); } catch (h) { console.log("  ! " + k.ad + ": " + h.message); }
+    if (yeni.length) okunanKaynak++;
+    let buKaynakYeni = 0;
+    for (const y of yeni) {
+      if (kayitYasliMi(y, bugunTR())) continue;          // ayılar öncesinin kapalı duyurusu
+      const p = parmakIzi(y);
+      const es = p ? izler.get(p) : null;
+      if (es) {  // aynı ilan başka kaynakta zaten var: eksik alanları tamamla
+        if (!es.sonBasvuru && y.sonBasvuru) { es.sonBasvuru = y.sonBasvuru; es.baslangic = es.baslangic || y.baslangic; }
+        if (!es.kontenjan && y.kontenjan) es.kontenjan = y.kontenjan;
+        if (!es.iller.length && y.iller.length) es.iller = y.iller;
+        if (!es.unvanlar.length && y.unvanlar.length) es.unvanlar = y.unvanlar;
+        if (!es.ogrenim.length && y.ogrenim.length) es.ogrenim = y.ogrenim;
+        birlesen++;
+        continue;
+      }
+      if (kayitlar[y.id]) {
+        const m = kayitlar[y.id];
+        m.baslik = y.baslik; m.ozet = y.ozet;
+        if (y.sonBasvuru) { m.sonBasvuru = y.sonBasvuru; m.baslangic = y.baslangic || m.baslangic; }
+        if (y.kontenjan) m.kontenjan = y.kontenjan;
+        continue;
+      }
+      kayitlar[y.id] = y;
+      if (p && !izler.has(p)) izler.set(p, y);
+      eklenen++; buKaynakYeni++;
+    }
+    kaynakDurum.push(k.ad + " " + buKaynakYeni);
+  }
+
+  /* Düz HTML kaynaklarda (kamualimlari, memurjet) liste yalnızca başlık veriyor;
+     son başvuru, puan türü ve kurum ilan SAYFASINDA. Bütçe yettiğince okunur. */
+  let detayIslenen = 0;
+  if (indir) {
+    const istenen = [];
+    for (const k of YENI_KAYNAKLAR.filter((x) => x.tur === "kart")) {
+      const kendi = Object.values(kayitlar).filter((x) => x.kategoriSlug === k.slug);
+      for (const r of kartDetayAdresleri(kendi, 12)) istenen.push({ id: r.id, url: r.url, slug: k.slug });
+    }
+    if (istenen.length) {
+      const b = Math.max(0, butce - 6000);
+      if (b > 8000) {
+        isci(istenen.map((x) => x.url), b);
+        const kayitEki = Object.fromEntries(Object.entries(kayitlar).flatMap(([id, k]) => (k.detayIstenen ? [[id, k]] : [])));
+        for (const { id, url, slug } of istenen) {
+          const kayit = kayitEki[id]; if (!kayit) continue;
+          const html = await onekOku(url); if (!html) continue;
+          const k = YENI_KAYNAKLAR.find((x) => x.slug === slug);
+          try { if (kartDetayUygula(kayit, html, k, Y)) detayIslenen++; } catch { /* bozuk sayfa: başlıksız bırak */ }
+        }
+      }
+    }
+  }
+
+  /* Süresi dolmuş derleme kayıtları listeyi şişirmesin (kural yeni-kaynaklar.mjs'te). */
+  const yeniSluglar = new Set(YENI_KAYNAKLAR.map((x) => x.slug));
+  let elenen = 0;
+  for (const [id, k] of Object.entries(kayitlar)) {
+    if (!k.kategoriSlug || !yeniSluglar.has(k.kategoriSlug)) continue;
+    if (k.sonBasvuru && k.sonBasvuru < bugunTR()) k.yayinda = false;
+    if (kayitYasliMi(k, bugunTR())) { delete kayitlar[id]; elenen++; }
+  }
+  return { eklenen, birlesen, elenen, detayIslenen, okunanKaynak, kaynakDurum };
+}
+
 /* günlüğe satır ekle: süreç beklenmedik biçimde kapanırsa iz kalması için */
 async function izMesaji(s) {
   try {
@@ -613,7 +748,7 @@ async function ana() {
   process.on("exit", kilidiBirak);
   // 1) kategori listeleri + ana sayfa
   const bit1 = isci(listeAdresleri(), kalanZaman());
-  console.log("  1/4  Liste sayfaları: " + (bit1 ? "tamam" : "kısmi"));
+  console.log("  1/5  Liste sayfaları: " + (bit1 ? "tamam" : "kısmi"));
 
   // 2) listeleri ayrıştır
   const kayitlar = await kayitlariYukle();
@@ -626,17 +761,26 @@ async function ana() {
   }
   const anaHtml = await onekOku(ANA_SAYFA);
   if (anaHtml) listelerdenYukle(kayitlar, anaHtml, { slug: "gundem", ad: "Gündemdeki İlanlar" }, { gecen: false });
-  console.log("  2/4  Kayıt sayısı: " + Object.keys(kayitlar).length + " (önceki " + once + ")");
+  console.log("  2/5  Kayıt sayısı: " + Object.keys(kayitlar).length + " (önceki " + once + ")");
   await izMesaji(`liste ayrıştırıldı: ${Object.keys(kayitlar).length} kayıt`);
   await yaz(kayitlar); // yeni ilanları hemen diske yaz: süreç yarım kalsa bile liste kaybolmaz
 
   // 3) ek kaynaklar: Kamu İlanları (SBB) ve Yerel Yönetimler (CSB)
   const ek = await ekKaynaklariBirlestir(kayitlar, { indir: true, butce: Math.max(0, kalanZaman() - 25000) });
-  console.log("  3/4  Ek kaynaklar: Kamu İlanları " + (ek.sbb ? "okundu" : "alınamadı") + ", Yerel Yönetimler " + (ek.csb ? ek.csbSayfa + " sayfa okundu" : "alınamadı") +
+  console.log("  3/5  Ek kaynaklar: Kamu İlanları " + (ek.sbb ? "okundu" : "alınamadı") + ", Yerel Yönetimler " + (ek.csb ? ek.csbSayfa + " sayfa okundu" : "alınamadı") +
     " → " + ek.eklenen + " yeni, " + ek.birlesen + " birleşti" + (ek.silinen ? ", " + ek.silinen + " mükerrer temizlendi" : ""));
   await yaz(kayitlar);
 
-  // 4) ilan detayları (memurlar.net sayfaları + yerel yönetim duyuru metinleri)
+  // 4) derleyici kaynaklar (Kadro Atlası, Kariyer Bankası, Kamu Memur Alımı, …)
+  const yn = await yeniKaynaklariBirlestir(kayitlar, { indir: true, butce: Math.max(0, kalanZaman() - 25000) });
+  console.log("  4/5  Derleyici kaynaklar: " + yn.okunanKaynak + "/" + YENI_KAYNAKLAR.length + " okundu → " +
+    yn.eklenen + " yeni, " + yn.birlesen + " mevcut ilanla birleşti" +
+    (yn.detayIslenen ? ", " + yn.detayIslenen + " ilan sayfası işlendi" : "") +
+    (yn.elenen ? ", süresi geçmiş " + yn.elenen + " kayıt atıldı" : "") +
+    "  (" + yn.kaynakDurum.join(", ") + ")");
+  await yaz(kayitlar);
+
+  // 5) ilan detayları (memurlar.net sayfaları + yerel yönetim duyuru metinleri)
   const eksik = Object.values(kayitlar).filter((i) => !i.detayVar).map((i) => i.url);
   const bit2 = isci(eksik, Math.max(0, kalanZaman()));
   await izMesaji(`detay indirmesi: ${bit2 ? "tamam" : "kısmi"} (${eksik.length} aday)`);
@@ -652,6 +796,10 @@ async function ana() {
     if (kategori) il.kategori = kategori;
     il.detayVar = true;
   }
+  // 6) aynı ilanın farklı kaynaklardaki kopyalarını detaylar okunduktan sonra ayıkla
+  const ayiklanan = mukerrerleriAyikla(kayitlar);
+  if (ayiklanan) console.log("  •   Mükerrer kaynak kayıtları: " + ayiklanan + " kopya kaldırıldı");
+
   const s = await yaz(kayitlar);
 
   // guncelleme.bat bu dosyanın var/yok oluşuna bakarak tekrarlama kararı verir
@@ -688,6 +836,7 @@ async function kur() {
   if (anaHtml) listelerdenYukle(kayitlar, anaHtml, { slug: "gundem", ad: "Gündemdeki İlanlar" });
   let islenen = 0;
   await ekKaynaklariBirlestir(kayitlar);
+  await yeniKaynaklariBirlestir(kayitlar);   // önbellekteki derleyici çıktılarından
   for (const il of Object.values(kayitlar)) {
     if (il.detayVar) continue;
     const html = await onekOku(il.url);
@@ -701,6 +850,7 @@ async function kur() {
   }
   // detayı olmayan arşiv kayıtlarını at: boş satırdan iyidir hiç satır olmaması
   for (const [id, i] of Object.entries(kayitlar)) if (!i.detayVar && !i.yayinda && !String(i.id).startsWith("csb-")) delete kayitlar[id];
+  mukerrerleriAyikla(kayitlar);
   const s = await yaz(kayitlar);
   console.log(`  Önblekten kuruldu: ${s.liste.length} kayıt (${islenen} detay) | acik ${s.acik} | kurum ${s.kurum} | il ${s.il} | sonbaşvuru ${s.tarih} | puan ${s.puanli}`);
 }
