@@ -1,17 +1,17 @@
 {
- "guncelleme": "2026-11-26T07:02:17.492Z",
- "guncellemeYazi": "26.11.2026 10:02:17",
- "toplam": 506,
- "acik": 300,
- "ortaogretim": 26,
- "onlisans": 48,
- "kadro": 52414,
- "kpssli": 62,
- "kpssDisi": 444,
+ "guncelleme": "2026-11-26T07:02:57.093Z",
+ "guncellemeYazi": "26.11.2026 10:02:57",
+ "toplam": 499,
+ "acik": 303,
+ "ortaogretim": 27,
+ "onlisans": 51,
+ "kadro": 39152,
+ "kpssli": 65,
+ "kpssDisi": 434,
  "turSayilari": {
   "P3": 36,
-  "P93": 28,
-  "P94": 16
+  "P93": 31,
+  "P94": 17
  },
  "kaynak": "memurlar.net · kamuilan.sbb.gov.tr · yerelyonetimler.csb.gov.tr"
 }
