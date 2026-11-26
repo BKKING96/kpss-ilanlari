@@ -1,0 +1,6 @@
+# KPSS İlan Ajansı — robots.txt
+# Arama motorlarının tamamına açığız; ilan verimiz herkese açık.
+User-agent: *
+Allow: /
+
+Sitemap: https://bkking96.github.io/kpss-ilanlari/sitemap.xml
