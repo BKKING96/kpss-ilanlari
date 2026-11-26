@@ -172,6 +172,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "İş İlanları Afyonkarahisar Sağlık Bilimleri Üniversitesi",
+  "puanTuru": "P93",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Tarih 30 Kasım 2026 Afet ve Acil Durum Yönetimi Başkanlığı",
   "puanTuru": "P3",
   "min": 70,
@@ -237,6 +246,24 @@
   "yil": "2026",
   "kurum": "Tarım ve Orman Bakanlığı",
   "puanTuru": "P3",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Boğaziçi Üniversitesi",
+  "puanTuru": "P93",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Boğaziçi Üniversitesi",
+  "puanTuru": "P94",
   "min": 60,
   "ust": 60,
   "ilan": 1,
