@@ -308,8 +308,11 @@ const depo = {
 };
 let FAVORILER = new Set(depo.al("kpss-favoriler", []));
 const favorileriYaz = () => depo.ver("kpss-favoriler", [...FAVORILER]);
-/* Son ziyaret damgası: bu andan sonra eklenen ilanlar "yeni" sayılır. */
-const SON_BAKIS = depo.al("kpss-son-bakis", 0);
+/* Son ziyaret damgası: bu andan SONRAKİ günlerde sitemize düşen ilanlar
+   "yeni" sayılır. ekllendi alanı yalnızca tarih taşır (2026-11-26), o yüzden
+   karşılaştırma gün kırpılarak yapılır — aynı gün eklenenler "yeni" değildir. */
+const SON_BAKIS = String(depo.al("kpss-son-bakis", "") || "");
+const YENI_MI = (i) => !!SON_BAKIS && String(i.eklendi || "").slice(0, 10) > SON_BAKIS.slice(0, 10);
 const $ = (s) => document.querySelector(s);
 const tr = (s) => (s||"").toLocaleLowerCase("tr");
 const tarihce = (g) => g ? new Date(g+"T00:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}) : "—";
@@ -470,7 +473,7 @@ function ilSayimi() {
 function kendiCipleri() {
   const kutu = $("#fKendi"); kutu.innerHTML = "";
   const favoriAdet = ILANLAR.filter((i) => FAVORILER.has(i.id)).length;
-  const yeniAdet = SON_BAKIS ? ILANLAR.filter((i) => (i.eklendi || "") > SON_BAKIS).length : 0;
+  const yeniAdet = ILANLAR.filter(YENI_MI).length;
   const yap = (etiket, adet, aktif, fn, ip) => {
     const b = document.createElement("button");
     b.className = "cip" + (aktif ? " on" : ""); b.type = "button";
@@ -594,7 +597,7 @@ function kart(i) {
   const metinZayif = (i.ogrenim || []).join() === "Belirtilmemiş" && !i.minPuan;
   if (metinZayif) et.push(`<span class="et" title="Bu ilanın metni kurum tarafından görsel (resim) olarak yayımlanmış; şartlar kaynak sayfada görülebilir.">şartlar görselde · kaynakta bakın</span>`);
   const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  const yeni = SON_BAKIS && (i.eklendi || "") > SON_BAKIS;
+  const yeni = YENI_MI(i);
   return `<article class="ilan" data-url="${i.url}" data-id="${i.id}">
     <button class="fav ${FAVORILER.has(i.id) ? "on" : ""}" data-fav="${i.id}"
       title="${FAVORILER.has(i.id) ? "Favorilerden çıkar" : "Favorilere ekle"}">${FAVORILER.has(i.id) ? "★" : "☆"}</button>
