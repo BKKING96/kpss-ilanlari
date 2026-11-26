@@ -9,6 +9,14 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
 <!-- RSS keşfi: Feedly/Thunderbird gibi okuyucular bu satırı görüp beslemeyi kendiliğinden ekler -->
 <link rel="alternate" type="application/rss+xml" title="KPSS İlan Ajansı — RSS beslemesi" href="besleme.xml" />
+<!-- PWA: telefona ana ekrana kurulabilmesi için manifest + ikonlar + renk eşiği -->
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="192x192" href="ikon-192.png" />
+<link rel="apple-touch-icon" href="ikon-192.png" />
+<meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="KPSS İlan" />
 <style>
   :root {
     --bg: #f5f7fa; --panel: #fff; --metin: #17212e; --soluk: #64748b;
