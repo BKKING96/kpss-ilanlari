@@ -37,10 +37,25 @@ const MOD = process.argv[2];
    Önceden önbellek HİÇ tazelenmiyordu: bir kez indirilen liste sayfası
    sonsuza dek kullanılıyor, bu yüzden yeni ilanlar hiç görünmüyordu
    (site 19 Kasım'dan beri 131 kayıtta donmuştu).
-     · liste sayfaları  : hızlı değişir → 10 dakika
+     · liste sayfaları  : hızlı değişir → 45 saniye
      · ilan detayları   : nadiren değişir → 3 gün                            */
-const TAZE_LISTE_MS = 10 * 60 * 1000;
+/* Tarama artık Görev Zamanlayıcı'da 1 dakikada bir (isteğe bağlı olarak
+   nobetci.mjs ile 45 saniyede bir) çalışıyor. Eşik 10 dakika bırakılsaydı her
+   tur yalnızca kendi önbelleğine bakar, kaynak sitelere hiç bakmazdı — yani
+   taramayı sıklaştırmak sitenin tazelliğini artırmazdı. 45 sn: bir tur bitip
+   diğeri başladığında liste sayfaları gerçekten yeniden çekilir.
+   Detay sayfaları 3 günde bir: bir ilanın şartları gün içinde değişmiyor,
+   böylece istek sayısı makul kalıyor (kaynak sitelerin bizi geçici olarak
+   engellememesi için asıl koruma bu).                                      */
+const TAZE_LISTE_MS = Math.max(15, +(process.env.TAZE_LISTE_SN || 45)) * 1000;
 const TAZE_DETAY_MS = 3 * 24 * 60 * 60 * 1000;
+
+/* HIZLI=1 → "sıcak tur": yeni ilanların neredeyse hepsinin düştüğü birkaç
+   kategori + ana sayfa + derleyici siteler. Dakika Sayıcısı her turu tam
+   yapsaydı tek tur 3-4 dakika sürer, kaynak siteler de boşuna Yorulurdu.
+   Tam tur (tüm kategoriler + arşiv + CSB'nin 6 sayfası) her TUR_EVI'nde bir. */
+const HIZLI = process.env.HIZLI === "1";
+const SICAK_KATEGORILER = new Set(["kpss-b-ilanlari", "4b-ilanlari", "genel-ilanlar", "mahalli-ilanlari", "akademik-ilanlar-devlet"]);
 
 /* ek kaynaklar (SBB listesi, CSB duyuru listesi) */
 const EK_KAYNAKLAR = { sbb: "https://kamuilan.sbb.gov.tr/", csb: "https://yerelyonetimler.csb.gov.tr/duyurular" };
@@ -125,9 +140,14 @@ const KATEGORILER = [
    yani bir kategorinin tek sayfası vardır; derinlik SBB ve CSB tarafında.   */
 const ANA_SAYFA = BASE + "/";
 const kategoriUrl = (k, gecen) => `${BASE}/kategori/${k.slug}/?Expire=${gecen}`;
+/* Sıcak tur (HIZLI=1) yalnızca bu kategorilerin BAŞVURUSU AÇIK sayfalarını
+   gezer; tam tur hepsini + arşivi. Böylece bir dakika turu ~6 adresle geçer. */
+const taramaKapsami = () => (HIZLI
+  ? KATEGORILER.filter((k) => SICAK_KATEGORILER.has(k.slug)).map((k) => [k, "false"])
+  : KATEGORILER.flatMap((k) => ["false", "true"].map((e) => [k, e])));
 const listeAdresleri = () => {
   const u = [];
-  for (const k of KATEGORILER) for (const e of ["false", "true"]) u.push(kategoriUrl(k, e));
+  for (const [k, e] of taramaKapsami()) u.push(kategoriUrl(k, e));
   u.push(ANA_SAYFA);
   return u;
 };
@@ -560,7 +580,9 @@ async function ekKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = {}
     const n = Math.max(1, ...[...csbIlk.matchAll(/\/duyurular\/(\d+)/g)].map((m) => +m[1]));
     for (let s = 2; s <= Math.min(n, 6); s++) csbSayfalari.push(`${EK_KAYNAKLAR.csb}/${s}`);
   }
-  if (indir && kalan() > 8000) isci(csbSayfalari.slice(1), Math.max(0, kalan() - 8000));
+  /* Sıcak turda CSB'nin geri kalan sayfaları indirilmez (1. sayfada bugünün
+     duyuruları var); tam tur 6 sayfayı da gezerek eski duyuruları toplar.   */
+  if (indir && !HIZLI && kalan() > 8000) isci(csbSayfalari.slice(1), Math.max(0, kalan() - 8000));
 
   const yeni = [];
   const sbbHtml = await onekOku(EK_KAYNAKLAR.sbb);
@@ -683,7 +705,9 @@ async function yeniKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = 
   if (indir) {
     const istenen = [];
     for (const k of YENI_KAYNAKLAR.filter((x) => x.tur === "kart")) {
-      const kendi = Object.values(kayitlar).filter((x) => x.kategoriSlug === k.slug);
+      /* kategori artık ilanın TÜRKENDEN bulunuyor, kaynağınkinden değil;
+         kaynağın kendisi kaynakSlug alanında duruyor.                     */
+      const kendi = Object.values(kayitlar).filter((x) => (x.kaynakSlug || x.kategoriSlug) === k.slug);
       for (const r of kartDetayAdresleri(kendi, 12)) istenen.push({ id: r.id, url: r.url, slug: k.slug });
     }
     if (istenen.length) {
@@ -705,7 +729,8 @@ async function yeniKaynaklariBirlestir(kayitlar, { indir = false, butce = 0 } = 
   const yeniSluglar = new Set(YENI_KAYNAKLAR.map((x) => x.slug));
   let elenen = 0;
   for (const [id, k] of Object.entries(kayitlar)) {
-    if (!k.kategoriSlug || !yeniSluglar.has(k.kategoriSlug)) continue;
+    const kaynak = k.kaynakSlug || k.kategoriSlug;
+    if (!kaynak || !yeniSluglar.has(kaynak)) continue;
     if (k.sonBasvuru && k.sonBasvuru < bugunTR()) k.yayinda = false;
     if (kayitYasliMi(k, bugunTR())) { delete kayitlar[id]; elenen++; }
   }
@@ -727,7 +752,10 @@ const KILIT = path.join(ONEK, "_calisiyor");
 async function kilitAl() {
   const { stat, writeFile: yz } = await import("node:fs/promises");
   const s = await stat(KILIT).catch(() => null);
-  if (s && Date.now() - s.mtimeMs < 15 * 60 * 1000) return false;
+  /* Kilit 8 dakikadan yeniyse tarama hâlâ sürüyor demektir (bir tur en fazla
+   ~3-4 dakika sürüyor; 8 dakika, çöken bir sürecin kilitlerini de bırakıp
+   taramanın durmaması için verilmiş pay).                                  */
+  if (s && Date.now() - s.mtimeMs < 8 * 60 * 1000) return false;
   try { await yz(KILIT, new Date().toISOString(), "utf8"); } catch { /* okunamazsa devam */ }
   return true;
 }
@@ -753,11 +781,9 @@ async function ana() {
   // 2) listeleri ayrıştır
   const kayitlar = await kayitlariYukle();
   const once = Object.keys(kayitlar).length;
-  for (const k of KATEGORILER) {
-    for (const e of ["false", "true"]) {
-      const html = await onekOku(kategoriUrl(k, e));
-      if (html) listelerdenYukle(kayitlar, html, k, { gecen: e === "true" });
-    }
+  for (const [k, e] of taramaKapsami()) {
+    const html = await onekOku(kategoriUrl(k, e));
+    if (html) listelerdenYukle(kayitlar, html, k, { gecen: e === "true" });
   }
   const anaHtml = await onekOku(ANA_SAYFA);
   if (anaHtml) listelerdenYukle(kayitlar, anaHtml, { slug: "gundem", ad: "Gündemdeki İlanlar" }, { gecen: false });
