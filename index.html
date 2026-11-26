@@ -620,10 +620,10 @@ function kart(i) {
     : `<span class="et tur">${t}</span>`));
   else if ((i.puanSinifi || "kpss-disi") === "kpssli") et.push(`<span class="et" title="İlanda P3/P93/P94 açıkça yazmıyor; öğrenim durumuna göre tür belli değil">KPSS puanı şartı var</span>`);
   else et.push(`<span class="et dis">KPSS dışı</span>`);
-  (i.ogrenim||[]).filter(o=>o!=="Belirtilmemiş").slice(0,3).forEach(o=>et.push(`<span class="et">${o}</span>`));
-  if (i.iller?.length) et.push(`<span class="et">${i.iller.slice(0,3).join(", ")}${i.iller.length>3?" …":""}</span>`);
+  (i.ogrenim||[]).filter(o=>o!=="Belirtilmemiş").slice(0,3).forEach(o=>et.push(`<span class="et">${kacir(o)}</span>`));
+  if (i.iller?.length) et.push(`<span class="et">${kacir(i.iller.slice(0,3).join(", "))}${i.iller.length>3?" …":""}</span>`);
   if (i.sonBasvuru) et.push(`<span class="et tarih">son başvuru ${tarihce(i.sonBasvuru)}</span>`);
-  if (i.yontem) et.push(`<span class="et">${i.yontem}</span>`);
+  if (i.yontem) et.push(`<span class="et">${kacir(i.yontem)}</span>`);
   const metinZayif = (i.ogrenim || []).join() === "Belirtilmemiş" && !i.minPuan;
   if (metinZayif) et.push(`<span class="et" title="Bu ilanın metni kurum tarafından görsel (resim) olarak yayımlanmış; şartlar kaynak sayfada görülebilir.">şartlar görselde · kaynakta bakın</span>`);
   const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
