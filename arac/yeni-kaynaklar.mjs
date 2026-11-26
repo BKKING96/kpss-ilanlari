@@ -160,6 +160,32 @@ function ilanMi(baslik, govde) {
     || /alim|alım/i.test(baslik);
 }
 
+/* ----------------------------------------------- kategori eşleştirmesi ------ */
+/* Derleyici sitelerin kendi tür adları ("Kadro Atlası · Sürekli İşçi" gibi)
+   süzgeçte ayrı ayrı çip olurdu ve sitenin 13 kategorisiyle aynı şeyi ikinci
+   kez anlatırdı. Burada ilanlar SİTENİN MEVCUT kategorilerine yerleştirilir;
+   böylece "4/B Sözleşmeli Personel" süzgeci artık bu sitelerdeki ilanları da
+   getirir. Eşleşme bulunamazsa kaynağın kendi adı kullanılır (bilgi kaybolmaz).
+   Kaynağın kendisi ayrıca kaynakSlug alanında durur.                       */
+const KATEGORI_ESLEK = [
+  { ad: "Akademik Kadro (Diğer)", slug: "akademik-diger", desen: /öğretim üyesi|öğretim elemanı|öğretim görevlisi|araştırma görevlisi|akademik|okutman|profesör|doçent|doktor öğretim/i },
+  { ad: "Engelli Personel Alımı", slug: "engelli-ilanlari", desen: /engelli/i },
+  { ad: "Askeri / Güvenlik", slug: "askeri-ilanlar", desen: /uzman erbaş|erbaş|erbas|subay|astsubay|asker|korucu|polis alımı|çarşı ve mahalle bekçisi/i },
+  { ad: "KPSS-A (Kurum Giriş Sınavları)", slug: "kpss-a-ilanlari", desen: /kaymakam|müfettiş|müfettiş|denetmen|uzman yardımcısı|stajyer|kontrolör|kariyer meslek|a grubu/i },
+  { ad: "Geçici İşçi Alımı", slug: "gecici-isci-ilanlari", desen: /geçici işçi|gecici isci|mevsimlik|sözleşmeli işçi/i },
+  { ad: "Daimi İşçi Alımı", slug: "daimi-isci-ilanlari", desen: /sürekli işçi|surekli isci|daimi işçi|eski hükümlü|kadrolu işçi/i },
+  { ad: "4/B Sözleşmeli Personel", slug: "4b-ilanlari", desen: /sözleşmeli|sozlesmeli|4\/b\b/i },
+  { ad: "Mahalli İdareler / Belediyeler", slug: "mahalli-ilanlari", desen: /belediye|il özel idare|büyükşehir/i },
+  { ad: "KPSS-B (Merkezi olmayan alımlar)", slug: "kpss-b-ilanlari", desen: /memur|personel|hemşire|mühendis|mimar|tekniker|teknisyen|büro|destek personeli|işçi|isci/i },
+];
+function kategoriBul(metin, k, Y) {
+  /* tire/alt çizgi boşluğa çevrilir: kaynak türleri "a-grubu-memur" gibi
+     slug olarak da gelebiliyor, kalıplar ise kelimelerle yazılı.           */
+  const t = trKucuk(metin).replace(/[-_/]+/g, " ");
+  for (const e of KATEGORI_ESLEK) if (e.desen.test(t)) return { kategori: e.ad, kategoriSlug: e.slug };
+  return { kategori: k.ad, kategoriSlug: k.slug };   // hiçbir kalıba uymuyorsa kaynağın adı çip olur
+}
+
 /* İl listesi: başlıkta il geçiyorsa güvenilen cevap odur. Metindeki liste
    yanıltıcı olabiliyor: "81 ilde istihdam" tarzı duyuruların içinde bütün
    şehirler geçiyor ve süzgeçte tek bir ilan 81 ilde görünüyordu.            */
@@ -232,7 +258,7 @@ export function wpIlanlari(jsonYazi, k, Y) {
       url: resmiBul(govde, HIC) || g.link,
       ozetUrl: g.link,
       baslik, tarih: hamTarih || Y.bugun(),
-      kategori: k.ad, kategoriSlug: k.slug,
+      ...kategoriBul(metin, k, Y), kaynakSlug: k.slug,
       kurum, ...alan,
       yayinda: true, detayVar: true, eklendi: Y.bugun(),
       iller: illerSec(baslik, metin, Y),
@@ -279,7 +305,7 @@ export function kadroAtlasiIlanlari(html, k, Y) {
       url: adrese, ozetUrl: adrese,
       baslik: kurum && !baslik.toLocaleLowerCase("tr").includes(trKucuk(kurum).split(" ")[0]) ? `${kurum}: ${baslik}` : baslik,
       tarih: tarihIso || Y.bugun(),
-      kategori: k.ad + (tur ? " · " + tur.replace(/[-_]/g, " ").replace(/^./, (x) => x.toLocaleUpperCase("tr")) : ""), kategoriSlug: k.slug,
+      ...kategoriBul([tur, kurum, baslik].join(" "), k, Y), kaynakSlug: k.slug,
       kurum: kurum || null,
       sonBasvuru: Y.tarih(sonMeta || "") || alan.sonBasvuru,
       baslangic: null,
@@ -321,7 +347,7 @@ export function kartIlanlari(html, k, Y, gorulen = new Set()) {
       id: "kr-" + hash(k.slug + "#" + adrese),
       url: adrese, ozetUrl: adrese,
       baslik, tarih: kartTarih || Y.bugun(), tarihBilinmiyor: !kartTarih,
-      kategori: k.ad, kategoriSlug: k.slug,
+      ...kategoriBul(metin, k, Y), kaynakSlug: k.slug,
       kurum, ...alan,
       ogrenim: alan.ogrenim.length ? alan.ogrenim : Y.ogrenimBul(trKucuk(metin)),
       yayinda: true, detayVar: true, detayIstenen: true, eklendi: Y.bugun(),
