@@ -48,10 +48,15 @@ jobs:
           KPSS_CACHE: ${{ github.workspace }}/arac/cache
           KPSS_VERI: ${{ github.workspace }}/veriler
           KPSS_PAKETLE: "0"
-          BUTCE_SN: "330"
+          # Turlar artık 5 dakikada bir: bütçe, bir turun bir aralığa sığması
+          # için 120 saniyeye indirildi (2 tur × 120 sn ≈ 4 dk). İş bitmezse
+          # _devam bayrağı kalır ve sonraki tur kaldığı yerden devam eder —
+          # hiçbir şey kaybolmaz. Yereldeki 1 dakikalık tarama zaten daha sık
+          # baktığı için bulutun işi "derinlemesine" tur atmaktır.
+          BUTCE_SN: "120"
         run: |
           mkdir -p "$KPSS_CACHE" "$KPSS_VERI"
-          # önblekten gelen artıklar bu turu kilitlemesin
+          # önbellekten gelen artıklar bu turu kilitlemesin
           rm -f "$KPSS_CACHE/_calisiyor" "$KPSS_CACHE/_devam"
           for i in 1 2 3; do
             node arac/scraper.mjs || true
