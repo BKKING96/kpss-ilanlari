@@ -747,6 +747,33 @@ const bakisDamgasi = () => depo.ver("kpss-son-bakis", new Date().toISOString());
 setTimeout(bakisDamgasi, 45000);
 window.addEventListener("pagehide", bakisDamgasi);
 
+/* ---------- PWA: servis işçisi ve "telefona kur" düğmesi ----------
+   İşçi yalnız ağ üzerinden çalışır (dosyaya çift tıklamada anlamsız).
+   Kural: ilan VERİSİ önbelleğe alınmaz, sadece sayfa kabuğu alınır —
+   aksine davranır ve 10 saniyede bir tazeleme yapan liste bayatlardı.  */
+function pwaKur() {
+  try {
+    if (!/^https?:$/.test(location.protocol)) return;
+    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+    navigator.serviceWorker.register("sw.js").catch(() => { });
+  } catch { }
+}
+pwaKur();
+let kurmaIstegi = null;
+window.addEventListener("beforeinstallprompt", (olay) => {
+  olay.preventDefault();
+  kurmaIstegi = olay;
+  const dugme = $("#kur");
+  if (dugme) {
+    dugme.hidden = false;
+    dugme.onclick = async () => {
+      dugme.hidden = true;
+      try { kurmaIstegi.prompt(); await kurmaIstegi.userChoice; } catch { }
+      kurmaIstegi = null;
+    };
+  }
+});
+
 if (CANLI) {
   durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
   setInterval(() => { if (!document.hidden) tazele(); }, CANLI_MS);
