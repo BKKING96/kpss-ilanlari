@@ -760,13 +760,11 @@ async function tazele() {
     const [a, k] = await Promise.all([dene("ilanlar.json"), dene("puan-karnesi.json")]);
     if (a.length + "|" + (o.guncelleme || "") === imza) return; // tam sarkmıştı, yine aynı
     imza = a.length + "|" + (o.guncelleme || "");
-    {
-      ILANLAR = a.map(sinifla); KARNE = k; OZET = o;
-      secenekler(); ozetGoster(); karneCiz(); ciz();
-      durumSatiri("Yeni veri geldi — " + ILANLAR.length + " ilan · çekim: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
-    } else {
-      durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
-    }
+    /* Eskisi "aynıysa ekrana dokunma" diye else dalı taşıyordu; yukarıdaki
+       erken dönüş o dalın yerini aldığı için burada yalnız taze hâli var. */
+    ILANLAR = a.map(sinifla); KARNE = k; OZET = o;
+    secenekler(); ozetGoster(); karneCiz(); ciz();
+    durumSatiri("Yeni veri geldi — " + ILANLAR.length + " ilan · çekim: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
   } catch {
     durumSatiri("Veriye ulaşılamadı, sonraki denemede tekrar deneniyor…");
   }
