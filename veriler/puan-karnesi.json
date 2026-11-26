@@ -10,6 +10,24 @@
  },
  {
   "yil": "2026",
+  "kurum": "Recep Tayyip Erdoğan Üniversitesi",
+  "puanTuru": "P93",
+  "min": 85,
+  "ust": 85,
+  "ilan": 1,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Recep Tayyip Erdoğan Üniversitesi",
+  "puanTuru": "P94",
+  "min": 85,
+  "ust": 85,
+  "ilan": 1,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Afet ve Acil Durum Yönetimi Başkanlığı",
   "puanTuru": "P3",
   "min": 80,
