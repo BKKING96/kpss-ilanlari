@@ -1,8 +1,8 @@
 {
- "guncelleme": "2026-11-26T15:58:22.807Z",
- "guncellemeYazi": "26.11.2026 18:58:22",
+ "guncelleme": "2026-11-26T15:58:40.224Z",
+ "guncellemeYazi": "26.11.2026 18:58:40",
  "toplam": 515,
- "acik": 315,
+ "acik": 314,
  "ortaogretim": 31,
  "onlisans": 60,
  "kadro": 39770,
@@ -10,8 +10,8 @@
  "kpssDisi": 444,
  "turSayilari": {
   "P3": 38,
-  "P93": 39,
-  "P94": 22
+  "P93": 36,
+  "P94": 21
  },
  "kaynak": "memurlar.net · kamuilan.sbb.gov.tr · yerelyonetimler.csb.gov.tr"
 }
