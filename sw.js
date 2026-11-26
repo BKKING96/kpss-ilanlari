@@ -1,7 +1,7 @@
-/* sw.js — kpss-2026112608272 · paketle.mjs tarafından üretildi, elle düzenlemeyin.
+/* sw.js — kpss-2026112608273 · paketle.mjs tarafından üretildi, elle düzenlemeyin.
    Kabuk (sayfa + ikon + manifest) önbelleğe alınır; ilan verisi alınmaz ki
    sayfa her zaman taze listeyi göstersin. */
-const SURUM = "kpss-2026112608272";
+const SURUM = "kpss-2026112608273";
 const KABUK = ["./", "manifest.webmanifest", "ikon-192.png", "ikon-512.png"];
 
 self.addEventListener("install", (olay) => {
@@ -30,7 +30,8 @@ self.addEventListener("fetch", (olay) => {
       fetch(istek)
         .then((yanit) => {
           const kopya = yanit.clone();
-          caches.open(SURUM).then((k) => k.put("./", kopya));
+          /* yönlendirilmiş yanıt önbelleğe konamaz: olursa sessizce geçiyoruz */
+          caches.open(SURUM).then((k) => k.put("./", kopya)).catch(() => { });
           return yanit;
         })
         .catch(() => caches.match("./").then((x) => x || Response.error()))
@@ -42,7 +43,7 @@ self.addEventListener("fetch", (olay) => {
       bulunan ||
       fetch(istek).then((yanit) => {
         const kopya = yanit.clone();
-        caches.open(SURUM).then((k) => k.put(istek, kopya));
+        caches.open(SURUM).then((k) => k.put(istek, kopya)).catch(() => { });
         return yanit;
       })
     )
