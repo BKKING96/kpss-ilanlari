@@ -626,18 +626,19 @@ function kart(i) {
   if (i.yontem) et.push(`<span class="et">${kacir(i.yontem)}</span>`);
   const metinZayif = (i.ogrenim || []).join() === "Belirtilmemiş" && !i.minPuan;
   if (metinZayif) et.push(`<span class="et" title="Bu ilanın metni kurum tarafından görsel (resim) olarak yayımlanmış; şartlar kaynak sayfada görülebilir.">şartlar görselde · kaynakta bakın</span>`);
-  const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const yeni = YENI_MI(i);
-  return `<article class="ilan" data-url="${i.url}" data-id="${i.id}">
-    <button class="fav ${FAVORILER.has(i.id) ? "on" : ""}" data-fav="${i.id}"
+  if (!url) et.push(`<span class="et" title="Kaynak bağlantısı geçersiz; ilana kurumun duyuru sayfasından ulaşılabilir.">bağlantı yok</span>`);
+  const bag = url ? `href="${kacir(url)}" target="_blank" rel="noopener"` : `href="#"`;
+  return `<article class="ilan" data-url="${kacir(url)}" data-id="${kacir(i.id)}">
+    <button class="fav ${FAVORILER.has(i.id) ? "on" : ""}" data-fav="${kacir(i.id)}"
       title="${FAVORILER.has(i.id) ? "Favorilerden çıkar" : "Favorilere ekle"}">${FAVORILER.has(i.id) ? "★" : "☆"}</button>
     <span class="durum ${sinf}">${yazi}${yeni ? '<span class="yenirozet">yeni</span>' : ""}</span>
-    <h3><a href="${i.url}" target="_blank" rel="noopener">${esc(i.baslik)}</a></h3>
-    ${i.kurum ? `<div class="kurum">${esc(i.kurum)}</div>` : ""}
+    <h3><a ${bag}>${kacir(i.baslik)}</a></h3>
+    ${i.kurum ? `<div class="kurum">${kacir(i.kurum)}</div>` : ""}
     <div class="etiketler">${et.join("")}</div>
-    ${i.ozet ? `<p class="ozetmetin">${esc(i.ozet).slice(0,230)}${i.ozet.length>230?"…":""}</p>` : ""}
-    <div class="alt"><span>${i.kategori} · ilan tarihi ${tarihce(i.tarih)}${i.kaynak?" · kaynak: "+esc(i.kaynak):""}</span>
-      <a class="git" href="${i.url}" target="_blank" rel="noopener">İlanı kaynak sayfada aç →</a></div>
+    ${i.ozet ? `<p class="ozetmetin">${kacir(i.ozet).slice(0,230)}${i.ozet.length>230?"…":""}</p>` : ""}
+    <div class="alt"><span>${kacir(i.kategori)} · ilan tarihi ${tarihce(i.tarih)}${i.kaynak?" · kaynak: "+kacir(i.kaynak):""}</span>
+      ${url ? `<a class="git" ${bag}>İlanı kaynak sayfada aç →</a>` : ""}</div>
   </article>`;
 }
 function ciz() {
@@ -651,7 +652,8 @@ function ciz() {
   const db = $("#dahaBtn"); if (db) db.onclick = () => { S.limit += 40; ciz(); };
   $("#ilanlar").querySelectorAll(".ilan").forEach(k => k.onclick = (e) => {
     if (e.target.closest("a") || e.target.closest(".fav")) return;
-    window.open(k.dataset.url, "_blank", "noopener");
+    /* kartın bağlantısı geçersizse yeni sekme açmaya çalışmayız */
+    if (k.dataset.url) window.open(k.dataset.url, "_blank", "noopener");
   });
   /* Yıldız: karta tıklamadan yalnızca favori işaretini değiştirir. */
   $("#ilanlar").querySelectorAll(".fav").forEach((b) => b.onclick = (e) => {
