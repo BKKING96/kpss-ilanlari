@@ -129,6 +129,10 @@
   .bos { text-align:center; padding:46px 20px; color:var(--soluk) }
   .bos b { display:block; color:var(--metin); font-size:17px; margin-bottom:6px }
   footer { text-align:center; color:var(--soluk); font-size:12.5px; padding:0 16px 40px }
+  /* Chrome "kurulabilir" diye işaretleyince belirir; işaretlenmezse hiç görünmez */
+  #kur { border:1px solid var(--marka); background:var(--marka); color:#fff; border-radius:999px;
+    padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; margin:0 auto 10px; display:block }
+  #kur:hover { filter:brightness(1.08) }
   .yol { background:var(--panel); border:1px dashed var(--kenar); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; color:var(--soluk) }
   code { background:rgba(127,127,127,.14); padding:1px 5px; border-radius:5px; font-size:12.5px }
 </style>
@@ -240,6 +244,7 @@
 
 <footer>
   <div class="wrap">
+    <button id="kur" hidden>📱 Telefona kur</button>
     <span id="guncelleme"></span> · <a href="besleme.xml">RSS beslemesi</a> (Feedly/Thunderbird ile takip edebilirsin) · Kaynaklar: <a href="https://ilan.memurlar.net/kategori/kpss-b-ilanlari/" target="_blank" rel="noopener">ilan.memurlar.net</a>,
 <a href="https://kamuilan.sbb.gov.tr/" target="_blank" rel="noopener">kamuilan.sbb.gov.tr</a>,
 <a href="https://yerelyonetimler.csb.gov.tr/duyurular" target="_blank" rel="noopener">yerelyonetimler.csb.gov.tr</a>
