@@ -235,6 +235,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Tarım ve Orman Bakanlığı",
+  "puanTuru": "P3",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Karatay Belediyesi",
   "puanTuru": "P93",
   "min": 60,
