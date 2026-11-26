@@ -723,6 +723,12 @@ async function tazele() {
   }
 }
 
+/* "Son ziyaretinden beri yeni" çipi bu bakışı saymasın diye damga sayfayı
+   45 saniye açık tuttuktan sonra tazelenir; sekme kapanırken de yazılır.   */
+const bakisDamgasi = () => depo.ver("kpss-son-bakis", new Date().toISOString());
+setTimeout(bakisDamgasi, 45000);
+window.addEventListener("pagehide", bakisDamgasi);
+
 if (CANLI) {
   durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
   setInterval(() => { if (!document.hidden) tazele(); }, CANLI_MS);
