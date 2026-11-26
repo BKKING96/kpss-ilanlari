@@ -318,13 +318,19 @@ function sinifla(i) {
   i.kpssTuruBiliniyor = false;
   return i;
 }
+/* Puan türü çipleri. "bos" = ilanda KPSS şartı var ama hangi tür istediği
+   yazmıyor (kurum şartnamesi genelde görsel yayımlıyor). O ilanlar P3/P93/P94
+   çiplerinin hiçbirine girmediği için ayrı gösterilmek zorunda — yoksa
+   kullanıcı "hiç ilan yok" sanıyor.                                        */
 function turListesi() {
-  const n = { P3: 0, P93: 0, P94: 0, dis: 0 };
+  const n = { P3: 0, P93: 0, P94: 0, dis: 0, bos: 0 };
   for (const i of ILANLAR) {
     for (const t of i.puanTurleriUC || []) if (UC_TUR.includes(t)) n[t]++;
     if (i.puanSinifi === "kpss-disi") n.dis++;
+    else if (!(i.puanTurleriUC || []).length) n.bos++;
   }
-  return [["P3 · lisans", ["P3", n.P3]], ["P93 · önlisans", ["P93", n.P93]], ["P94 · ortaöğretim", ["P94", n.P94]], ["KPSS dışı", ["dis", n.dis]]];
+  return [["P3 · lisans", ["P3", n.P3]], ["P93 · önlisans", ["P93", n.P93]], ["P94 · ortaöğretim", ["P94", n.P94]],
+    ["türü belirtilmemiş", ["bos", n.bos]], ["KPSS dışı", ["dis", n.dis]]];
 }
 function cip(kutu, liste, grup, esleme) {
   kutu.innerHTML = "";
@@ -348,12 +354,15 @@ function turCipleri() {
     const b = document.createElement("button");
     b.className = "cip"; b.type = "button"; b.dataset.v = v;
     if (v === "dis") b.title = "KPSS şartı olmayanlar ile P3/P93/P94 dışında puan türü isteyenler (P10, P43, P121 …) ve kendi giriş sınavı olanlar";
+    else if (v === "bos") b.title = "KPSS puanı isteniyor ama ilanın metninde hangi tür olduğu yazmıyor — kaynak sayfadan doğrulayın";
     else b.title = v + " — " + ({ P3: "lisans KPSS puanı", P93: "önlisans KPSS puanı", P94: "ortaöğretim KPSS puanı" })[v];
     b.innerHTML = `${ad} <i>${adet}</i>`;
     b.onclick = () => {
       if (S.tur.has(v)) S.tur.delete(v);
       else {
-        if (v !== "dis") S.tur.forEach((x) => x !== "dis" && S.tur.delete(x)); // tek puan türü
+        /* P3/P93/P94 birbirini dışlar; "KPSS dışı" ve "türü belirtilmemiş"
+           onlarla birlikte seçilebilir (birlikte genişletir, daraltmaz).   */
+        if (v !== "dis" && v !== "bos") S.tur.forEach((x) => x !== "dis" && x !== "bos" && S.tur.delete(x));
         S.tur.add(v);
       }
       isaretle(); S.limit = 40; ciz();
@@ -389,8 +398,13 @@ function ilKey(s) { /* "Afyon"≈"Afyonkarahisar", "İçel"≈"Mersin" yapan ana
 const KADRO_SIRASI = ["Memur / Büro Personeli", "Sağlık Personeli", "Teknik Personel",
   "Akademik & Öğretmen", "Sözleşmeli Personel (4/B)", "Sürekli İşçi", "Geçici / Mevsimlik İşçi",
   "Askeri & Güvenlik", "KPSS-A / Kurum Sınavlı", "Engelli / Eski Hükümlü", "Diğer Kamu İlanları"];
-function cipGrup(sec, alan,degerFn, hedef, sira) {
+function cipGrup(sec, alan, degerFn, hedef, sira, sadeceAcik) {
+  /* sadeceAcik: çipin yanındaki sayı yalnızca başvurusu açık ilanları saysın —
+     kullanıcı filtrelediğinde zaten açık listeyi görüyor, sayı tutmali.     */
+  const yedek = ILANLAR;
+  if (sadeceAcik) ILANLAR = ILANLAR.filter((i) => i.durum === "acik");
   const m = say(alan, degerFn);
+  if (sadeceAcik) ILANLAR = yedek;
   const sıraLi = sira ? [...m].sort((a, b) => {
     const i = sira.indexOf(a[0]), j = sira.indexOf(b[0]);
     return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || b[1] - a[1];
@@ -423,8 +437,8 @@ function ilSayimi() {
 function secenekler() {
   cipGrup($("#fOgrenim"), "ogrenim", i=>i.ogrenim||[], S.ogrenim);
   turCipleri();
-  cipGrup($("#fKadro"), "kadro", i=>[i.kadro], S.kadro, KADRO_SIRASI);
-  cipGrup($("#fKurum"), "kurumTuru", i=>[i.kurumTuru], S.kurum);
+  cipGrup($("#fKadro"), "kadro", i=>[i.kadro], S.kadro, KADRO_SIRASI, true);
+  cipGrup($("#fKurum"), "kurumTuru", i=>[i.kurumTuru], S.kurum, null, true);
   cip($("#fDurum"), [["Başvuru açık", null], ["Kapandı", null], ["Tarih belirtilmemiş", null]], S.durum, (ad) => DURUM_ET[ad]);
   const { m, bos } = ilSayimi();
   const adet = (ad) => { const n = m.get(ilKey(ad)) || 0; return n ? ` (${n})` : ""; };
@@ -462,7 +476,8 @@ function uygun(i) {
     const turleri = i.puanTurleriUC || [];
     const uygunTur = turleri.some((t) => secilenler.includes(t));
     const uygunDis = S.tur.has("dis") && (i.puanSinifi || "kpss-disi") === "kpss-disi";
-    if (!uygunTur && !uygunDis) return false;
+    const uygunBos = S.tur.has("bos") && (i.puanSinifi || "") === "kpssli" && !turleri.length;
+    if (!uygunTur && !uygunDis && !uygunBos) return false;
   }
   if (S.kadro.size && !S.kadro.has(i.kadro)) return false;
   if (S.kurum.size && !S.kurum.has(i.kurumTuru)) return false;
@@ -507,6 +522,9 @@ function kart(i) {
      şart; kurum türü daha soluk, onun yanında.                            */
   if (i.kadro) et.push(`<span class="et kadrotur">${i.kadro}</span>`);
   if (i.kurumTuru && i.kurumTuru !== "Kurumu belirsiz") et.push(`<span class="et">${i.kurumTuru}</span>`);
+  /* 3-7 gün arası: sağ üstteki durum rozeti yalnızca son 2 günü işaretler,
+     o boşluğu burada kırmızı etiketle kapatıyoruz.                        */
+  { const kg = saat(i.sonBasvuru); if (kg !== null && kg >= 3 && kg <= 7) et.push(`<span class="et acil">${kg} gün kaldı</span>`); }
   if (i.kontenjan) et.push(`<span class="et kadro">${i.kontenjan} kişi</span>`);
   (i.unvanlar||[]).slice(0,3).forEach(u=>et.push(`<span class="et unvan">${u}</span>`));
   if (i.minPuan) et.push(`<span class="et puan">en az ${i.minPuan} puan</span>`);
