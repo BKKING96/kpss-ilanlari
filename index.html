@@ -711,7 +711,9 @@ ozetGoster(); karneCiz(); ciz();
    Sayfa, kendi veri dosyasını CANLI_MS'de bir yeniden çeker. Değişen bir şey
    yoksa ekran hiç oynanmaz; değiştiyse süzgeçler korunarak yeniden çizilir.
    Sekme arka plandayken bekler, göründüğü an hemen dener. */
-let imza = ILANLAR.length + "|" + (OZET.guncelleme || "");
+/* ozet.json'daki toplam ile karşılaştırılacağı için imza onunla kurulur;
+   gömülü veriden açıldığımızda OZET.toplam yoksa elimizdeki sayı kullanılır. */
+let imza = (OZET.toplam ?? ILANLAR.length) + "|" + (OZET.guncelleme || "");
 let deneme = 0, sonKontrol = null;
 const saniye = (ms) => Math.max(1, Math.round(ms / 1000));
 const CANLI_YAZI = () => "sayfa her " + saniye(CANLI_MS) + " saniyede bir kendiliğinden tazeleniyor";
@@ -727,10 +729,21 @@ async function tazele() {
   sonKontrol = new Date();
   durumSatiri("Veri kontrol ediliyor…");
   try {
-    const [a, k, o] = await veriGet();
-    const yeniImza = a.length + "|" + (o.guncelleme || "");
-    if (yeniImza !== imza) {
-      imza = yeniImza; ILANLAR = a.map(sinifla); KARNE = k; OZET = o;
+    /* Önce YALNIZCA ozet.json sorulur (343 bayt). Eskiden her 10 saniyede
+       548 KB'lık liste + 7 KB karnede indiriliyordu: sekmesi açık kalan bir
+       telefonda saatte ~200 MB veri demekti. İmza değişmezse büyük dosyalara
+       hiç dokunulmaz.                                                   */
+    const o = await dene("ozet.json");
+    const yeniImza = (o.toplam || 0) + "|" + (o.guncelleme || "");
+    if (yeniImza === imza) {
+      durumSatiri("Son veri çekimi: " + (o.guncellemeYazi || OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
+      return;
+    }
+    const [a, k] = await Promise.all([dene("ilanlar.json"), dene("puan-karnesi.json")]);
+    if (a.length + "|" + (o.guncelleme || "") === imza) return; // tam sarkmıştı, yine aynı
+    imza = a.length + "|" + (o.guncelleme || "");
+    {
+      ILANLAR = a.map(sinifla); KARNE = k; OZET = o;
       secenekler(); ozetGoster(); karneCiz(); ciz();
       durumSatiri("Yeni veri geldi — " + ILANLAR.length + " ilan · çekim: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
     } else {
