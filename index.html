@@ -596,8 +596,15 @@ function ciz() {
     ? `<button class="btn" id="dahaBtn">Daha göster (${liste.length - S.limit} kaldı)</button>` : "";
   const db = $("#dahaBtn"); if (db) db.onclick = () => { S.limit += 40; ciz(); };
   $("#ilanlar").querySelectorAll(".ilan").forEach(k => k.onclick = (e) => {
-    if (e.target.closest("a")) return;
+    if (e.target.closest("a") || e.target.closest(".fav")) return;
     window.open(k.dataset.url, "_blank", "noopener");
+  });
+  /* Yıldız: karta tıklamadan yalnızca favori işaretini değiştirir. */
+  $("#ilanlar").querySelectorAll(".fav").forEach((b) => b.onclick = (e) => {
+    e.stopPropagation();
+    const id = b.dataset.fav;
+    FAVORILER.has(id) ? FAVORILER.delete(id) : FAVORILER.add(id);
+    favorileriYaz(); kendiCipleri(); ciz();
   });
   /* Acele şeridi: bu filtrede kaç ilanın 3 gün içinde kapandığını söyler ve
      tek tıkla yalnız onları gösterir (tekrar tıklayınca tam listeye döner). */
