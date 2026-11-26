@@ -75,6 +75,9 @@
   .et.kadro { background:#dcfce7; color:#14532d; font-weight:600 }
   .et.tarih { background:var(--gecbg); color:var(--gec); font-weight:600 }
   .et.unvan { background:#f1f5f9; color:#334155 }
+  .et.kadrotur { background:#dbeafe; color:#1e3a8a; font-weight:700 }
+  .et.acil { background:#fee2e2; color:#991b1b; font-weight:700 }
+  @media (prefers-color-scheme: dark){ .et.kadrotur{background:#172e52;color:#bfd6ff} .et.acil{background:#3b1416;color:#fecaca} }
   .et.tur { background:#fef3c7; color:#78350f; font-weight:700 }
   .et.dis { background:#f3e8ff; color:#5b21b6; font-weight:600 }
   .cip.turla { border-style:dashed; color:var(--soluk); font-size:12px }
@@ -143,12 +146,17 @@
       </div>
 
       <div class="grp">
-        <label>Kategori</label>
-        <div class="cipler" id="fKat"></div>
+        <label>Kadro türü <span class="ipucu">İlanda kimi aldıkları yazıyor: hemşire, sürekli işçi, araştırma görevlisi… Kaynak site adı artık filtre değil, ilanın altında etiket.</span></label>
+        <div class="cipler" id="fKadro"></div>
       </div>
 
       <div class="grp">
-        <label for="il">İl</label>
+        <label>İlanı veren kurum</label>
+        <div class="cipler" id="fKurum"></div>
+      </div>
+
+      <div class="grp">
+        <label for="il">İl <span class="ipucu" id="ilDipnot"></span></label>
         <select id="il"><option value="">Tüm iller</option></select>
       </div>
 
@@ -164,6 +172,7 @@
         <label for="sirala">Sırala</label>
         <select id="sirala">
           <option value="tarih">İlan tarihi (yeni → eski)</option>
+          <option value="acil">Son başvurusu yaklaşanlar önce</option>
           <option value="son">Son başvuru (yakın → uzak)</option>
           <option value="kadro">Kadro sayısı (çok → az)</option>
           <option value="puan">Taban puan (düşük → yüksek)</option>
@@ -264,7 +273,12 @@ if (!ILANLAR?.length) {
 }
 
 /* ============================ durum ============================ */
-const S = { q:"", ogrenim:new Set(), tur:new Set(), durum:new Set(["acik"]), kat:new Set(), il:"", minpuan:0, puansiz:true, sirala:"tarih", limit:40 };
+/* Filtre durumunun tek yeri. kadro/kurum artık kaynak adı değil:
+   kadro = ilanda kimi aldıkları, kurum = hangi tür kurum alıyor.
+   ilBos=true ise "ilİ belirtilmemiş" ilanlar gösterilir.                  */
+const S = { q:"", ogrenim:new Set(), tur:new Set(), durum:new Set(["acik"]),
+            kadro:new Set(), kurum:new Set(), il:"", ilBos:false,
+            minpuan:0, puansiz:true, sirala:"tarih", limit:40, acele:false };
 const $ = (s) => document.querySelector(s);
 const tr = (s) => (s||"").toLocaleLowerCase("tr");
 const tarihce = (g) => g ? new Date(g+"T00:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}) : "—";
@@ -368,18 +382,72 @@ function ilKey(s) { /* "Afyon"≈"Afyonkarahisar", "İçel"≈"Mersin" yapan ana
 }
 /* Süzgeç seçeneklerini veriden kurar. İlk açılışta bir kez, veri tazelendikçe
    bir daha çağrılır; kullanıcının seçimi korunur. */
+/* Kadro türü çipleri: veride hiç olmayan türler gösterilmez (0 yazıp
+   gereksiz yer kaplamasınlar), ama sıra sabit kalsın diye türler
+   KADRO_SIRASI'na göre dizilir — böylece sayfa her tazelendiğinde
+   düğmeler yer değiştirmez.                                                 */
+const KADRO_SIRASI = ["Memur / Büro Personeli", "Sağlık Personeli", "Teknik Personel",
+  "Akademik & Öğretmen", "Sözleşmeli Personel (4/B)", "Sürekli İşçi", "Geçici / Mevsimlik İşçi",
+  "Askeri & Güvenlik", "KPSS-A / Kurum Sınavlı", "Engelli / Eski Hükümlü", "Diğer Kamu İlanları"];
+function cipGrup(sec, alan,degerFn, hedef, sira) {
+  const m = say(alan, degerFn);
+  const sıraLi = sira ? [...m].sort((a, b) => {
+    const i = sira.indexOf(a[0]), j = sira.indexOf(b[0]);
+    return (i < 0 ? 99 : i) - (j < 0 ? 99 : j) || b[1] - a[1];
+  }) : m;
+  cip(sec, sıraLi, hedef);
+}
+/* İl seçicisi: 81 il coğrafî bölgelerine göre gruplu, her ilin yanında açık
+   ilan sayısı. En üstte "İli belirtilmemiş" (kurum duyurusunda il geçmeyen
+   ilanlar) ve en altta 81 dışı yerler durur.                               */
+const BOLGELER = {
+  "Marmara": ["İstanbul","Edirne","Kırklareli","Tekirdağ","Kocaeli","Sakarya","Bursa","Bilecik","Balıkesir","Çanakkale","Yalova"],
+  "Ege": ["İzmir","Aydın","Denizli","Muğla","Manisa","Kütahya","Uşak","Afyonkarahisar"],
+  "Akdeniz": ["Antalya","Burdur","Isparta","Mersin","Adana","Osmaniye","Hatay","Kahramanmaraş"],
+  "İç Anadolu": ["Ankara","Konya","Karaman","Aksaray","Niğde","Nevşehir","Kayseri","Sivas","Yozgat","Kırşehir","Kırıkkale","Çankırı","Eskişehir"],
+  "Karadeniz": ["Zonguldak","Karabük","Bartın","Kastamonu","Bolu","Düzce","Sinop","Samsun","Amasya","Çorum","Tokat","Ordu","Giresun","Trabzon","Rize","Artvin","Gümüşhane","Bayburt"],
+  "Doğu Anadolu": ["Erzurum","Erzincan","Tunceli","Bingöl","Elazığ","Malatya","Van","Muş","Bitlis","Hakkâri","Ağrı","Kars","Iğdır","Ardahan"],
+  "Güneydoğu Anadolu": ["Gaziantep","Adıyaman","Kilis","Şanlıurfa","Diyarbakır","Mardin","Batman","Şırnak","Siirt"],
+};
+function ilSayimi() {
+  const m = new Map();
+  let bos = 0;
+  for (const i of ILANLAR) {
+    if (i.durum !== "acik") continue;
+    const l = i.iller || [];
+    if (!l.length) { bos++; continue; }
+    for (const il of l) { const k = ilKey(il); m.set(k, (m.get(k) || 0) + 1); }
+  }
+  return { m, bos };
+}
 function secenekler() {
-  cip($("#fOgrenim"), say("ogrenim", i=>i.ogrenim||[]), S.ogrenim);
+  cipGrup($("#fOgrenim"), "ogrenim", i=>i.ogrenim||[], S.ogrenim);
   turCipleri();
-  cip($("#fKat"), say("kategori", i=>[i.kategori]), S.kat);
+  cipGrup($("#fKadro"), "kadro", i=>[i.kadro], S.kadro, KADRO_SIRASI);
+  cipGrup($("#fKurum"), "kurumTuru", i=>[i.kurumTuru], S.kurum);
   cip($("#fDurum"), [["Başvuru açık", null], ["Kapandı", null], ["Tarih belirtilmemiş", null]], S.durum, (ad) => DURUM_ET[ad]);
+  const { m, bos } = ilSayimi();
+  const adet = (ad) => { const n = m.get(ilKey(ad)) || 0; return n ? ` (${n})` : ""; };
   const secili = $("#il").value;
-  const bilinen = new Set(ILLER81.map(ilKey));
-  const ekyer = [...new Set(say("iller", i=>i.iller||[]).map(([il]) => il).filter(il => !bilinen.has(ilKey(il))))];
-  const liste = ILLER81.slice().sort((a,b) => a.localeCompare(b, "tr"));
-  $("#il").innerHTML = '<option value="">Tüm iller</option>';
-  for (const ad of liste) $("#il").insertAdjacentHTML("beforeend", `<option value="${ilKey(ad)}">${ad}</option>`);
-  for (const ad of ekyer.sort((a,b) => a.localeCompare(b, "tr"))) $("#il").insertAdjacentHTML("beforeend", `<option value="${ilKey(ad)}">${ad}</option>`);
+  const bilinen = new Set(Object.values(BOLGELER).flat().map(ilKey));
+  $("#il").innerHTML = `<option value="">Tüm iller</option>` +
+    `<option value="belirsiz">İli belirtilmemiş${bos ? ` (${bos})` : ""}</option>`;
+  for (const [bolge, iller] of Object.entries(BOLGELER)) {
+    const grup = document.createElement("optgroup");
+    grup.label = bolge;
+    grup.innerHTML = iller.slice().sort((a,b)=>a.localeCompare(b,"tr"))
+      .map((ad) => `<option value="${ilKey(ad)}">${ad}${adet(ad)}</option>`).join("");
+    $("#il").append(grup);
+  }
+  const ekyer = [...new Set(say("iller", i=>i.iller||[]).map(([il]) => il).filter(il => !bilinen.has(ilKey(il))))]
+    .sort((a,b) => a.localeCompare(b, "tr"));
+  if (ekyer.length) {
+    const grup = document.createElement("optgroup");
+    grup.label = "Diğer yerler";
+    grup.innerHTML = ekyer.map((ad) => `<option value="${ilKey(ad)}">${ad}${adet(ad)}</option>`).join("");
+    $("#il").append(grup);
+  }
+  $("#ilDipnot").textContent = bos ? `${bos} ilanın duyurusunda il geçmiyor` : "";
   if ([...$("#il").options].some(o => o.value === secili)) $("#il").value = secili;
   else { $("#il").value = ""; S.il = ""; }
 }
@@ -396,8 +464,13 @@ function uygun(i) {
     const uygunDis = S.tur.has("dis") && (i.puanSinifi || "kpss-disi") === "kpss-disi";
     if (!uygunTur && !uygunDis) return false;
   }
-  if (S.kat.size && !S.kat.has(i.kategori)) return false;
-  if (S.il && !(i.iller||[]).some(x => ilKey(x) === S.il)) return false;
+  if (S.kadro.size && !S.kadro.has(i.kadro)) return false;
+  if (S.kurum.size && !S.kurum.has(i.kurumTuru)) return false;
+  /* İl: "belirsiz" seçilirse duyurusunda il geçmeyen ilanlar gelir; "acil"
+     bayrağı da buradan süzülür (acele şeridine tıklayınca).               */
+  if (S.il === "belirsiz") { if ((i.iller || []).length) return false; }
+  else if (S.il && !(i.iller||[]).some(x => ilKey(x) === S.il)) return false;
+  if (S.acele && !(i.sonBasvuru && saat(i.sonBasvuru) >= 0 && saat(i.sonBasvuru) <= 3)) return false;
   if (S.q) { const a = i.arama || tr([i.baslik,i.kurum,(i.unvanlar||[]).join(" ")].join(" "));
     if (!S.q.toLowerCase("tr").split(/\s+/).every(k=>a.includes(k))) return false; }
   const g = saat(i.sonBasvuru);
@@ -411,6 +484,10 @@ function uygun(i) {
 const karsilastir = {
   tarih: (a,b)=> (b.tarih||"").localeCompare(a.tarih||""),
   son:   (a,b)=> (a.sonBasvuru||"9999").localeCompare(b.sonBasvuru||"9999"),
+  /* "önce acil olanlar": süresi geçen/ilansız tarihler en alta iner, kalan
+     gün artan sırada gider; eşitlikte yeni ilan önce gelir.               */
+  acil:  (a,b)=> (saat(a.sonBasvuru) ?? 9e9) - (saat(b.sonBasvuru) ?? 9e9)
+              || (b.tarih||"").localeCompare(a.tarih||""),
   kadro: (a,b)=> (b.kontenjan||0)-(a.kontenjan||0),
   puan:  (a,b)=> (a.minPuan||999)-(b.minPuan||999),
 };
@@ -426,6 +503,10 @@ function durumEtiketi(i) {
 function kart(i) {
   const [sinf, yazi] = durumEtiketi(i);
   const et = [];
+  /* Kadro türü en başta: filtrenin de adı olduğu için kartta görünmesi
+     şart; kurum türü daha soluk, onun yanında.                            */
+  if (i.kadro) et.push(`<span class="et kadrotur">${i.kadro}</span>`);
+  if (i.kurumTuru && i.kurumTuru !== "Kurumu belirsiz") et.push(`<span class="et">${i.kurumTuru}</span>`);
   if (i.kontenjan) et.push(`<span class="et kadro">${i.kontenjan} kişi</span>`);
   (i.unvanlar||[]).slice(0,3).forEach(u=>et.push(`<span class="et unvan">${u}</span>`));
   if (i.minPuan) et.push(`<span class="et puan">en az ${i.minPuan} puan</span>`);
@@ -465,10 +546,19 @@ function ciz() {
     if (e.target.closest("a")) return;
     window.open(k.dataset.url, "_blank", "noopener");
   });
-  const g = ILANLAR.filter(uypun).filter(i=>i.sonBasvuru && saat(i.sonBasvuru)!==null && saat(i.sonBasvuru)>=0 && saat(i.sonBasvuru)<=3);
-  $("#uygularda").innerHTML = g.length
-    ? `<div class="uygularda">⏰ <b>Başvuru süresi dolmak üzere:</b> ${g.length} ilan son 3 gün içinde kapanıyor —
-        ${g.slice(0,3).map(i=>i.baslik).join(" · ")}${g.length>3?" …":""}</div>` : "";
+  /* Acele şeridi: bu filtrede kaç ilanın 3 gün içinde kapandığını söyler ve
+     tek tıkla yalnız onları gösterir (tekrar tıklayınca tam listeye döner). */
+  const acikListe = ILANLAR.filter(uypun);
+  const g = acikListe.filter(i => i.sonBasvuru && saat(i.sonBasvuru) >= 0 && saat(i.sonBasvuru) <= 3);
+  const acele = ILANLAR.filter(i => i.durum === "acik" && i.sonBasvuru && saat(i.sonBasvuru) >= 0 && saat(i.sonBasvuru) <= 3);
+  $("#uygularda").innerHTML = S.acele
+    ? `<div class="uygularda">⏰ <b>Sadece son 3 gün</b> gösteriliyor (${g.length} ilan).
+        <button class="btn" id="aceleKapat" style="margin-left:8px;padding:4px 10px;font-size:12.5px">tümünü göster</button></div>`
+    : (acele.length ? `<div class="uygularda">⏰ <b>Başvurusu 3 gün içinde kapanan ${acele.length} ilan var</b>${g.length && g.length !== acele.length ? ` (şu anki filtrede ${g.length})` : ""}.
+        <button class="btn" id="aceleAc" style="margin-left:8px;padding:4px 10px;font-size:12.5px">onları göster</button></div>` : "");
+  const aa = $("#aceleAc"), ak = $("#aceleKapat");
+  if (aa) aa.onclick = () => { S.acele = true; S.limit = 40; ciz(); };
+  if (ak) ak.onclick = () => { S.acele = false; S.limit = 40; ciz(); };
 }
 const uypun = uygun;
 
