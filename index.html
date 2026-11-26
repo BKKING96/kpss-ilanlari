@@ -465,8 +465,29 @@ function ilSayimi() {
   }
   return { m, bos };
 }
+/* "Kendi listem" çipleri: favoriler ve bu sayfaya en son baktığın andan sonra
+   eklenen ilanlar. İkincisi "yeni" rozetinin de kaynağı.                    */
+function kendiCipleri() {
+  const kutu = $("#fKendi"); kutu.innerHTML = "";
+  const favoriAdet = ILANLAR.filter((i) => FAVORILER.has(i.id)).length;
+  const yeniAdet = SON_BAKIS ? ILANLAR.filter((i) => (i.eklendi || "") > SON_BAKIS).length : 0;
+  const yap = (etiket, adet, aktif, fn, ip) => {
+    const b = document.createElement("button");
+    b.className = "cip" + (aktif ? " on" : ""); b.type = "button";
+    if (ip) b.title = ip;
+    b.innerHTML = etiket + (adet ? ` <i>${adet}</i>` : "");
+    b.onclick = fn; kutu.append(b);
+  };
+  yap("★ Favorilerim", favoriAdet, S.yildiz,
+    () => { S.yildiz = !S.yildiz; S.limit = 40; kendiCipleri(); ciz(); },
+    "Kartlardaki yıldıza basarak listeni doldur");
+  if (yeniAdet) yap("Son ziyaretinden beri yeni", yeniAdet, false,
+    () => { S.sirala = "tarih"; $("#sirala").value = "tarih"; ciz(); },
+    "Bu sayfaya en son baktıktan sonra eklenen ilanlar — en üstte görmek için sıralamayı ilân tarihine çevirir");
+}
 function secenekler() {
   cipGrup($("#fOgrenim"), "ogrenim", i=>i.ogrenim||[], S.ogrenim);
+  kendiCipleri();
   turCipleri();
   cipGrup($("#fKadro"), "kadro", i=>[i.kadro], S.kadro, KADRO_SIRASI, true);
   cipGrup($("#fKurum"), "kurumTuru", i=>[i.kurumTuru], S.kurum, null, true);
