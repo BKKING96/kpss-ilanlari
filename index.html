@@ -573,8 +573,11 @@ function kart(i) {
   const metinZayif = (i.ogrenim || []).join() === "Belirtilmemiş" && !i.minPuan;
   if (metinZayif) et.push(`<span class="et" title="Bu ilanın metni kurum tarafından görsel (resim) olarak yayımlanmış; şartlar kaynak sayfada görülebilir.">şartlar görselde · kaynakta bakın</span>`);
   const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  return `<article class="ilan" data-url="${i.url}">
-    <span class="durum ${sinf}">${yazi}</span>
+  const yeni = SON_BAKIS && (i.eklendi || "") > SON_BAKIS;
+  return `<article class="ilan" data-url="${i.url}" data-id="${i.id}">
+    <button class="fav ${FAVORILER.has(i.id) ? "on" : ""}" data-fav="${i.id}"
+      title="${FAVORILER.has(i.id) ? "Favorilerden çıkar" : "Favorilere ekle"}">${FAVORILER.has(i.id) ? "★" : "☆"}</button>
+    <span class="durum ${sinf}">${yazi}${yeni ? '<span class="yenirozet">yeni</span>' : ""}</span>
     <h3><a href="${i.url}" target="_blank" rel="noopener">${esc(i.baslik)}</a></h3>
     ${i.kurum ? `<div class="kurum">${esc(i.kurum)}</div>` : ""}
     <div class="etiketler">${et.join("")}</div>
