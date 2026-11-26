@@ -297,7 +297,19 @@ if (!ILANLAR?.length) {
    ilBos=true ise "ilİ belirtilmemiş" ilanlar gösterilir.                  */
 const S = { q:"", ogrenim:new Set(), tur:new Set(), durum:new Set(["acik"]),
             kadro:new Set(), kurum:new Set(), il:"", ilBos:false,
-            minpuan:0, puansiz:true, sirala:"tarih", limit:40, acele:false };
+            minpuan:0, puansiz:true, sirala:"tarih", limit:40, acele:false, yildiz:false };
+
+/* ---------- tarayıcı hafızası: favoriler + "en son ne zaman baktın" ----------
+   Sunucu yok, hesap yok: her şey bu bilgisayarın tarayıcısında durur. Gizli
+   sekmede / izin verilmezse sessizce çalışmaz (try/catch), site bozulmaz.   */
+const depo = {
+  al: (k, y) => { try { const v = localStorage.getItem(k); return v === null ? y : JSON.parse(v); } catch { return y; } },
+  ver: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } },
+};
+let FAVORILER = new Set(depo.al("kpss-favoriler", []));
+const favorileriYaz = () => depo.ver("kpss-favoriler", [...FAVORILER]);
+/* Son ziyaret damgası: bu andan sonra eklenen ilanlar "yeni" sayılır. */
+const SON_BAKIS = depo.al("kpss-son-bakis", 0);
 const $ = (s) => document.querySelector(s);
 const tr = (s) => (s||"").toLocaleLowerCase("tr");
 const tarihce = (g) => g ? new Date(g+"T00:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}) : "—";
@@ -498,6 +510,7 @@ function uygun(i) {
     const uygunBos = S.tur.has("bos") && (i.puanSinifi || "") === "kpssli" && !turleri.length;
     if (!uygunTur && !uygunDis && !uygunBos) return false;
   }
+  if (S.yildiz && !FAVORILER.has(i.id)) return false;
   if (S.kadro.size && !S.kadro.has(i.kadro)) return false;
   if (S.kurum.size && !S.kurum.has(i.kurumTuru)) return false;
   /* İl: "belirsiz" seçilirse duyurusunda il geçmeyen ilanlar gelir; "acil"
