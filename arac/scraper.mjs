@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { sbbAyristir, csbListeyiOku, parmakIzi, bugunTR } from "./ek-kaynaklar.mjs";
 import { YENI_KAYNAKLAR, yeniKaynakAdresleri, yeniKaynakMi, kaynaklariOku, kayitYasliMi, kartDetayAdresleri, kartDetayUygula } from "./yeni-kaynaklar.mjs";
+import { kadroBul, kurumTuruBul, aciliyet, ilgisizMi } from "./kadro.mjs";
 
 const BURADAN = path.dirname(fileURLToPath(import.meta.url));
 /* KPSS_CACHE / KPSS_VERI: bulut (GitHub Actions) çalışırken yolları dışarıdan
@@ -302,6 +303,11 @@ function detayiOku(html, baslik) {
   }
   if (!kurumMu(kurum)) kurum = null;
 
+  /* İl çoğu ilanda başlıkta veya KURUM ADINDA geçiyor ("Konya Büyükşehir
+     Belediyesi", "Batman İl Sağlık Müdürlüğü"). Detay metni çekilmemiş
+     ilanlarda tek kaynak bu olduğu için özet + kurum adı da taranır.      */
+  for (const ekMetin of [ozetSatir, kurum || ""]) for (const il of illeriBul(ekMetin)) if (!iller.includes(il)) iller.push(il);
+
   const unvanlar = new Set();
   for (const m of (baslik + " " + govde).matchAll(UNVANLAR)) unvanlar.add(m[1].replace(/\s+/g, " ").replace(/^\w/, (c) => c.toUpperCase()));
 
@@ -410,9 +416,13 @@ const UC_TUR = ["P3", "P93", "P94"];
 function turBul(govde) {
   const t = new Set();
   if (!govde) return t;
-  for (const m of govde.matchAll(/KPSS[\s\S]{0,120}?\bP\s?0?(\d{1,3})\b/gi)) t.add("P" + +m[1]);
-  for (const m of govde.matchAll(/\bP\s?0?(\d{1,3})\b[^.\n]{0,45}?puan\s*t[üu]r[üu]/gi)) t.add("P" + +m[1]);
-  for (const m of govde.matchAll(/puan\s*t[üu]r[üu][^.\n]{0,55}?\bP\s?0?(\d{1,3})\b/gi)) t.add("P" + +m[1]);
+  /* \b yerine harf/rakam geri bakışı: metinde "KPSSP93", "KPSS P93", "P93'ye",
+     "KPSS puanı (P93)" gibi yazımlar geçiyor ve \b bunların çoğunu kaçırıyordu
+     (Türkçe kesme işareti ve ekler ASCII sınır kurallarına uymuyor).        */
+  const TUR = String.raw`(?<![a-z0-9])P\s?0?(\d{1,3})(?![0-9])`;
+  for (const m of govde.matchAll(new RegExp("KPSS[\\s\\S]{0,140}?" + TUR, "gi"))) t.add("P" + +m[1]);
+  for (const m of govde.matchAll(new RegExp(TUR + "[^\\n]{0,45}?(?:puan\\s*t[\\u00fcu]r[\\u00fcu]|puan[\\u0131i])", "gi"))) t.add("P" + +m[1]);
+  for (const m of govde.matchAll(new RegExp("puan\\s*t[\\u00fcu]r[\\u00fcu][^\\n]{0,55}?" + TUR, "gi"))) t.add("P" + +m[1]);
   return t;
 }
 function puanSinifi(i, govde) {
@@ -440,10 +450,18 @@ async function yaz(kayitlar) {
   const liste = Object.values(kayitlar).map((i) => {
     const gecti = i.sonBasvuru ? i.sonBasvuru < bugun : null;
     const sinif = puanSinifi(i, i.govdeMetni);
+    /* Kadro türü + kurum türü + aciliyet: arayüzdeki filtreler artık bunlara
+       dayanıyor. Kaynak adı (kategori) korunuyor ama filtre olarak değil,
+       ilanın üstünde "nereden geldi" etiketi olarak görünüyor.             */
+    const kadro = kadroBul(i);
+    const kTuru = kurumTuruBul(i.kurum, [i.baslik, i.ozet].filter(Boolean).join(" "));
     return {
       ...i,
+      kadro: kadro.ad, kadroSlug: kadro.slug,
+      kurumTuru: kTuru.ad, kurumTuruSlug: kTuru.slug,
+      aciliyet: aciliyet(i.sonBasvuru ? Math.round((new Date(i.sonBasvuru) - new Date(bugun)) / 864e5) : null),
       kaynak: kaynakce(i.kaynak),
-      durum: i.iptal ? "kapandi" : gecti === null ? "belirsiz" : gecti ? "kapandi" : "acik",
+      durum: ilgisizMi(i) ? "ilgisiz" : i.iptal ? "kapandi" : gecti === null ? "belirsiz" : gecti ? "kapandi" : "acik",
       // "P03" gibi yazımları tek biçime indir: P3
       puanTurleri: [...new Set((i.puanTurleri || [])
         .map((t) => "P" + parseInt(String(t).replace(/\D/g, ""), 10))
@@ -452,7 +470,7 @@ async function yaz(kayitlar) {
       puanTurleriUC: sinif.puanTurleriUC,
       kpssTuruBiliniyor: sinif.kpssTuruBiliniyor,
       kalanGun: i.sonBasvuru ? Math.round((new Date(i.sonBasvuru) - new Date(bugun)) / 864e5) : null,
-      arama: [i.baslik, i.kurum, (i.unvanlar || []).join(" "), (i.iller || []).join(" "), i.kategori, (i.puanTurleri || []).join(" "), (i.ogrenim || []).join(" "), (i.puanTurleriUC || []).join(" ")]
+      arama: [i.baslik, i.kurum, (i.unvanlar || []).join(" "), (i.iller || []).join(" "), i.kategori, kadro.ad, kTuru.ad, (i.puanTurleri || []).join(" "), (i.ogrenim || []).join(" "), (i.puanTurleriUC || []).join(" ")]
         .filter(Boolean).join(" ").toLocaleLowerCase("tr"),
     };
   }).map((i) => ({ ...i, arama: i.arama + " " + (i.puanSinifi === "kpss-disi" ? "kpss dışı kpss'siz" : "kpssli") }))
@@ -751,15 +769,24 @@ async function izMesaji(s) {
 const KILIT = path.join(ONEK, "_calisiyor");
 const KILIT_PAY_MS = 3 * 60 * 1000;   // bu kadar süredir dokunulmuyorsa sahibi ölmüş sayılır
 async function kilitAl() {
-  const { stat, writeFile: yz } = await import("node:fs/promises");
+  const { stat, writeFile: yz, rm } = await import("node:fs/promises");
+  /* Kilidi "yalnızca yoksa oluştur" (wx) bayrağıyla alıyoruz. Önceki hali
+     (önce bak, sonra yaz) iki ayrı süreçte aynı anda geçilebiliyordu: iki
+     tur aynı anda çalışıp aynı index.html'i yazmaya başlıyordu ve dosya bir
+     ara 0 bayta düşmüştü. wx yarışa kapalıdır — kazanan tek olur.         */
+  const al = async () => {
+    try { await yz(KILIT, new Date().toISOString(), { flag: "wx" }); return true; }
+    catch (e) { return e && e.code === "EEXIST" ? false : true; }   // okunamayan dosya sistemi: çalışmaya devam
+  };
+  if (await al()) return true;
   const s = await stat(KILIT).catch(() => null);
   /* Kilit son 3 dakikada alınmışsa tarama hâlâ sürüyor demektir. Eski pay
      15 dakikaydı; tarama dakikada bire inince o süre siteyi bayat bırakırdı,
      o yüzden 3 dakikaya indirildi (normal bir tur 15-90 saniye sürüyor).
      Yarıda kesilen/kapanan bir turun kilidi en kötü 3 dakika sonra düşer.  */
   if (s && Date.now() - s.mtimeMs < KILIT_PAY_MS) return false;
-  try { await yz(KILIT, new Date().toISOString(), "utf8"); } catch { /* okunamazsa devam */ }
-  return true;
+  try { await rm(KILIT, { force: true }); } catch { /* silinemezse bu tur boş geçer */ }
+  return await al();
 }
 async function kilidiBirak() {
   try { rmSync(KILIT, { force: true }); } catch { } // senkron: çıkışta da çalışır
@@ -772,6 +799,14 @@ async function ana() {
   const BUTCE = Math.max(30, +(process.env.BUTCE_SN || 100)) * 1000;
   const kalanZaman = () => BUTCE - (Date.now() - t0);
   console.log("\n  KPSS İLAN AJANI — güncelleme  (" + new Date().toLocaleString("tr-TR") + ")\n");
+  /* BAKIM MODU: cache/_durur dosyası varsa hiçbir şey okunmaz, hiçbir dosyaya
+     dokunulmaz. Elle bakım yaparken (ör. index.html onarımı) tüm döngüleri —
+     görevi, nöbetçiyi ve buluttan bağımsız yerel turları — tek hamlede
+     durdurur. Açmak için: del cache\_durur                                */
+  if (existsSync(path.join(ONEK, "_durur"))) {
+    console.log("  Bakım modu açık (cache/_durur var) — bu tur atlandı. Kapatmak için dosyayı sil.");
+    return;
+  }
   await mkdir(ONEK, { recursive: true });
   await mkdir(VERI, { recursive: true });
   if (!(await kilitAl())) { console.log("  Başka bir tarama hâlâ sürüyor; bu tur atlandı."); return; }
@@ -809,7 +844,16 @@ async function ana() {
   await yaz(kayitlar);
 
   // 5) ilan detayları (memurlar.net sayfaları + yerel yönetim duyuru metinleri)
-  const eksik = Object.values(kayitlar).filter((i) => !i.detayVar).map((i) => i.url);
+  /* Detay metni her şeyi besliyor: puan türü, il, kontenjan, başvuru tarihi.
+     Zamanı bitmiş ilanlar için harcama yapma — önce başvurusu açık ve en yeni
+     olanlar indirilsin, bütçe onlara yetmesin.                              */
+  const bugunK = bugunTR();
+  const eksik = Object.values(kayitlar).filter((i) => !i.detayVar)
+    .sort((a, b) => {
+      const aciK = (x) => (x.sonBasvuru && x.sonBasvuru >= bugunK ? 0 : x.sonBasvuru ? 2 : 1);
+      return aciK(a) - aciK(b) || (b.tarih || "").localeCompare(a.tarih || "");
+    })
+    .map((i) => i.url);
   const bit2 = isci(eksik, Math.max(0, kalanZaman()));
   await izMesaji(`detay indirmesi: ${bit2 ? "tamam" : "kısmi"} (${eksik.length} aday)`);
 
