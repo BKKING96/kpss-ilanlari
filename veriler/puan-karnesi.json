@@ -181,6 +181,24 @@
  },
  {
   "yil": "2026",
+  "kurum": "Afyonkarahisar Sağlık Bilimleri Üniversitesi",
+  "puanTuru": "P93",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Afyonkarahisar Sağlık Bilimleri Üniversitesi",
+  "puanTuru": "P94",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Tarih 30 Kasım 2026 Afet ve Acil Durum Yönetimi Başkanlığı",
   "puanTuru": "P3",
   "min": 70,
