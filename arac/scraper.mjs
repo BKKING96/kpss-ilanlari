@@ -749,13 +749,15 @@ async function izMesaji(s) {
 /* Çalışma kilidi: zamanlayıcı her dakika çalıştığı için, bir tarama uzun
    sürerse ikinci bir tarama aynı dosyalarla uğraşmasın (yarım yazma riski). */
 const KILIT = path.join(ONEK, "_calisiyor");
+const KILIT_PAY_MS = 3 * 60 * 1000;   // bu kadar süredir dokunulmuyorsa sahibi ölmüş sayılır
 async function kilitAl() {
   const { stat, writeFile: yz } = await import("node:fs/promises");
   const s = await stat(KILIT).catch(() => null);
-  /* Kilit 8 dakikadan yeniyse tarama hâlâ sürüyor demektir (bir tur en fazla
-   ~3-4 dakika sürüyor; 8 dakika, çöken bir sürecin kilitlerini de bırakıp
-   taramanın durmaması için verilmiş pay).                                  */
-  if (s && Date.now() - s.mtimeMs < 8 * 60 * 1000) return false;
+  /* Kilit son 3 dakikada alınmışsa tarama hâlâ sürüyor demektir. Eski pay
+     15 dakikaydı; tarama dakikada bire inince o süre siteyi bayat bırakırdı,
+     o yüzden 3 dakikaya indirildi (normal bir tur 15-90 saniye sürüyor).
+     Yarıda kesilen/kapanan bir turun kilidi en kötü 3 dakika sonra düşer.  */
+  if (s && Date.now() - s.mtimeMs < KILIT_PAY_MS) return false;
   try { await yz(KILIT, new Date().toISOString(), "utf8"); } catch { /* okunamazsa devam */ }
   return true;
 }
