@@ -557,8 +557,15 @@ function uygun(i) {
   if (S.il === "belirsiz") { if ((i.iller || []).length) return false; }
   else if (S.il && !(i.iller||[]).some(x => ilKey(x) === S.il)) return false;
   if (S.acele && !(i.sonBasvuru && saat(i.sonBasvuru) >= 0 && saat(i.sonBasvuru) <= 3)) return false;
-  if (S.q) { const a = i.arama || tr([i.baslik,i.kurum,(i.unvanlar||[]).join(" ")].join(" "));
-    if (!S.q.toLowerCase("tr").split(/\s+/).every(k=>a.includes(k))) return false; }
+  /* Arama: toLowerCase("tr") dil parametresini YOK SAYAR (standart öyle) ve
+     "İSTANBUL" yazınca "i̇stanbul" (birleşik noktalı) üretip hiçbir ilanla
+     eşleşmiyordu. toLocaleLowerCase("tr") ile arama metniyle aynı kurala
+     getirilir: I→ı, İ→i.                                              */
+  if (S.q) {
+    const a = i.arama || tr([i.baslik, i.kurum, (i.unvanlar||[]).join(" ")].join(" "));
+    const igneler = tr(S.q).split(/\s+/).filter(Boolean);
+    if (!igneler.every((k) => a.includes(k))) return false;
+  }
   const g = saat(i.sonBasvuru);
   if (S.durum.size && !S.durum.has(i.durum)) return false;
   if (S.minpuan > 0) {
@@ -586,19 +593,27 @@ function durumEtiketi(i) {
   if (g <= 2) return ["d-son", g === 0 ? "Son gün!" : g + " gün kaldı"];
   return ["d-acik","Başvuru açık"];
 }
+/* İlan metni üçüncü taraflardan geliyor: kurum adı, unvan, il, kategori…
+   Hepsi sayfaya yazılmadan önce kaçırılmalı (< > & "). Aksi halde kaynak
+   sitedeki bir ilan başlığındaki HTML bizim sayfamızda çalışırdı.        */
+const kacir = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+/* Bağlantı da dışarıdan geliyor: yalnız http/https kabul edilir; javascript:
+   ya da data: şeması hem href hem window.open üzerinden kod çalıştırabilir. */
+const guvenliUrl = (u) => /^https?:\/\//i.test(String(u || "")) ? String(u) : "";
 function kart(i) {
   const [sinf, yazi] = durumEtiketi(i);
   const et = [];
+  const url = guvenliUrl(i.url);
   /* Kadro türü en başta: filtrenin de adı olduğu için kartta görünmesi
      şart; kurum türü daha soluk, onun yanında.                            */
-  if (i.kadro) et.push(`<span class="et kadrotur">${i.kadro}</span>`);
-  if (i.kurumTuru && i.kurumTuru !== "Kurumu belirsiz") et.push(`<span class="et">${i.kurumTuru}</span>`);
+  if (i.kadro) et.push(`<span class="et kadrotur">${kacir(i.kadro)}</span>`);
+  if (i.kurumTuru && i.kurumTuru !== "Kurumu belirsiz") et.push(`<span class="et">${kacir(i.kurumTuru)}</span>`);
   /* 3-7 gün arası: sağ üstteki durum rozeti yalnızca son 2 günü işaretler,
      o boşluğu burada kırmızı etiketle kapatıyoruz.                        */
   { const kg = saat(i.sonBasvuru); if (kg !== null && kg >= 3 && kg <= 7) et.push(`<span class="et acil">${kg} gün kaldı</span>`); }
-  if (i.kontenjan) et.push(`<span class="et kadro">${i.kontenjan} kişi</span>`);
-  (i.unvanlar||[]).slice(0,3).forEach(u=>et.push(`<span class="et unvan">${u}</span>`));
-  if (i.minPuan) et.push(`<span class="et puan">en az ${i.minPuan} puan</span>`);
+  if (i.kontenjan) et.push(`<span class="et kadro">${kacir(i.kontenjan)} kişi</span>`);
+  (i.unvanlar||[]).slice(0,3).forEach(u=>et.push(`<span class="et unvan">${kacir(u)}</span>`));
+  if (i.minPuan) et.push(`<span class="et puan">en az ${kacir(i.minPuan)} puan</span>`);
   /* puan türü etiketi: ya P3/P93/P94, ya "KPSS puanı şartı var", ya "KPSS dışı" */
   if ((i.puanTurleriUC || []).length) (i.puanTurleriUC || []).forEach((t) => et.push(i.kpssTuruBiliniyor === false
     ? `<span class="et tur" title="İlanda puan türü açıkça yazmıyor; öğrenim durumuna göre tahmin edildi. Kaynak sayfadan doğrulayın.">${t}?</span>`
