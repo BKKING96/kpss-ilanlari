@@ -364,8 +364,8 @@
   "kurum": "Emniyet Genel Müdürlüğü",
   "puanTuru": "P94",
   "min": 60,
-  "ust": 60,
-  "ilan": 1,
+  "ust": 100,
+  "ilan": 3,
   "ogrenim": "Ortaöğretim"
  },
  {
