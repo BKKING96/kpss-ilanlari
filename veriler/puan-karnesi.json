@@ -145,6 +145,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Gelir İdaresi Başkanlığı",
+  "puanTuru": "P93",
+  "min": 70,
+  "ust": 70,
+  "ilan": 2,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Marmara Üniversitesi",
   "puanTuru": "P93",
   "min": 70,
@@ -356,7 +365,7 @@
   "puanTuru": "P3",
   "min": 60,
   "ust": 60,
-  "ilan": 1,
+  "ilan": 2,
   "ogrenim": "Lisans"
  },
  {
