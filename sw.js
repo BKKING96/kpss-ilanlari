@@ -1,7 +1,7 @@
-/* sw.js — kpss-abeb5f836a · paketle.mjs tarafından üretildi, elle düzenlemeyin.
+/* sw.js — kpss-1e0d4f8f30 · paketle.mjs tarafından üretildi, elle düzenlemeyin.
    Kabuk (sayfa + ikon + manifest) önbelleğe alınır; ilan verisi alınmaz ki
    sayfa her zaman taze listeyi göstersin. */
-const SURUM = "kpss-abeb5f836a";
+const SURUM = "kpss-1e0d4f8f30";
 const KABUK = ["./", "manifest.webmanifest", "ikon-180.png", "ikon-192.png", "ikon-512.png"];
 
 self.addEventListener("install", (olay) => {
