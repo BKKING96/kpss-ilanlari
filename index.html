@@ -312,19 +312,6 @@ async function dene(dosya) {
   if (!r.ok) throw 0;
   return r.json();
 }
-/* Veriyi iki yoldan biriyle getirir:
-   a) veriler/*.json  → kendi sunucundan açtığında (node guncelle.mjs --sunucu)
-   b) sayfanın kendi HTML'indeki gömülü blok → tek dosya olarak yayınlandığında */
-async function gomuluTaze() {
-  const r = await fetch(location.href.split("?")[0] + "?t=" + Date.now(), { cache: "no-store" });
-  if (!r.ok) throw 0;
-  const metin = await r.text();
-  const m = metin.match(/<script id="gommudata" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!m) throw 0;
-  const d = JSON.parse(m[1]);
-  if (!d?.ilanlar?.length) throw 0;
-  return [d.ilanlar, d.karne || [], d.ozet || {}];
-}
 /* Yayın sürümünde sayfada gömülü veri YOK (bilinçli: kabuk 112 KB olsun),
    liste tek başına veriler/ilanlar.json'dan geliyor. O tek istek bir kez
    tökezlerse (zayıf bağlantı, GitHub dağıtımın ortasında yakalanması,
@@ -406,8 +393,21 @@ function tekille(liste) {
 }
 if (ILANLAR?.length) ILANLAR = tekille(ILANLAR);
 if (!ILANLAR?.length) {
-  document.getElementById("ilanlar").innerHTML =
-    '<div class="panel bos"><b>Veri bulunamadı</b>Aynı klasörde <code>node scraper.mjs</code> çalıştır, sonra sayfayı yenile.</div>';
+  /* Bu kutu iki okuyucusu olan bir kutu: (1) internetten bakan ziyaretçi —
+     ona "terminal komutu" göstermek anlamsız, sayfasını yenilemesi yeter;
+     (2) kendi bilgisayarında veriyi henüz çekmemiş sahibi — ona da komutu
+     söylüyoruz. Eskiden yalnız ikincisi yazıyordu ve site ilk açılan
+     ziyaretçiye "Veri bulunamadı · node scraper.mjs çalıştır" diyordu. */
+  const yerelde = location.protocol === "file:";
+  document.getElementById("ilanlar").innerHTML = yerelde
+    ? '<div class="panel bos"><b>Veri bulunamadı</b>Aynı klasörde <code>node scraper.mjs</code> çalıştır, sonra sayfayı yenile.</div>'
+    : `<div class="panel bos"><b>Liste bir an için indirilemedi</b>
+        İlan verisi ayrı bir dosyada duruyor; bağlantı o an geç kalabiliyor.
+        Birkaç saniye sonra yenilemeyi dene — ya da şu an başvurusu açık
+        ilanları doğrudan RSS beslemesinden takip et:
+        <a href="besleme.xml">besleme.xml</a>.
+        <div style="margin-top:12px"><button type="button" onclick="location.reload()">Yeniden dene</button></div>
+      </div>`;
 }
 
 /* ============================ durum ============================ */
