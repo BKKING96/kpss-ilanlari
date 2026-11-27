@@ -334,6 +334,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "İçişleri Bakanlığı",
+  "puanTuru": "P94",
+  "min": 60,
+  "ust": 60,
+  "ilan": 2,
+  "ogrenim": "Ortaöğretim"
+ },
+ {
+  "yil": "2026",
   "kurum": "Türkiye Su Enstitüsü Başkanlığı",
   "puanTuru": "P3",
   "min": 60,
@@ -375,15 +384,6 @@
   "min": 60,
   "ust": 60,
   "ilan": 2,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "İçişleri Bakanlığı",
-  "puanTuru": "P94",
-  "min": 60,
-  "ust": 60,
-  "ilan": 1,
   "ogrenim": "Lisans"
  },
  {
