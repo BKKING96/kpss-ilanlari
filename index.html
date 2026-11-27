@@ -738,6 +738,9 @@ function kart(i) {
       <span class="not">(mükerrer sayılmaz)</span></div>` : "";
   if (!url) et.push(`<span class="et" title="Kaynak bağlantısı geçersiz; ilana kurumun duyuru sayfasından ulaşılabilir.">bağlantı yok</span>`);
   const bag = url ? `href="${kacir(url)}" target="_blank" rel="noopener"` : `href="#"`;
+  /* Özet satırında sıra ÖNCE kırp (slice), SONRA kaçır (kacir) olmalı: ters
+     sırada kırpılırsa "&quot;" gibi bir kaçış ortadan bölünüp ekranda çöp
+     yazı çıkıyor. Bu not bir JS yorumudur — kartın HTML'ine yazılmaz.      */
   return `<article class="ilan" data-url="${kacir(url)}" data-id="${kacir(i.id)}">
     <button class="fav ${FAVORILER.has(i.id) ? "on" : ""}" data-fav="${kacir(i.id)}"
       title="${FAVORILER.has(i.id) ? "Favorilerden çıkar" : "Favorilere ekle"}">${FAVORILER.has(i.id) ? "★" : "☆"}</button>
@@ -745,8 +748,6 @@ function kart(i) {
     <h3><a ${bag}>${kacir(i.baslik)}</a></h3>
     ${i.kurum ? `<div class="kurum">${kacir(i.kurum)}</div>` : ""}
     <div class="etiketler">${et.join("")}</div>
-    /* ÖNCE kırp, SONRA kaçır: ters sırada kırpılırsa "&quot;" gibi bir kaçış
-       ortadan bölünüp ekranda "&qu" diye çöp yazı çıkabilir.             */
     ${i.ozet ? `<p class="ozetmetin">${kacir(String(i.ozet).slice(0,230))}${String(i.ozet).length>230?"…":""}</p>` : ""}
     ${ekSatir}
     <div class="alt"><span>${kacir(i.kategori)} · ilan tarihi ${tarihce(i.tarih)}${i.kaynak?" · kaynak: "+kacir(i.kaynak):""}</span>
