@@ -12,11 +12,22 @@
 <!-- PWA: telefona ana ekrana kurulabilmesi için manifest + ikonlar + renk eşiği -->
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/png" sizes="192x192" href="ikon-192.png" />
+<!-- iOS ana ekran ikonu: Safari manifest ikonlarını DEĞİL, apple-touch-icon'u
+     kullanır. 180×180 Apple'ın önerdiği ölçüdür; 192 de çalışır ama iOS
+     ölçeklendirirken kenarları yumuşatıyor. -->
+<link rel="apple-touch-icon" sizes="180x180" href="ikon-180.png" />
 <link rel="apple-touch-icon" href="ikon-192.png" />
 <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
 <meta name="mobile-web-app-capable" content="yes" />
+<!-- iOS'ta "tam ekran" davranışını bu ESKİ etiket taşır: manifest'teki
+     display:standalone iOS 16.4 öncesinde yok sayılıyor, sonrasında da
+     ana ekrana eklenirken bu etiket esas alınıyor. Eksikken site kurulu
+     açıldığında Safari arayüzü kaybolmuyordu.                       -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="KPSS İlan" />
+<meta name="format-detection" content="telephone=no" />
 <style>
   :root {
     --bg: #f5f7fa; --panel: #fff; --metin: #17212e; --soluk: #64748b;
