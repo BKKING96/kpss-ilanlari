@@ -361,6 +361,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Emniyet Genel Müdürlüğü",
+  "puanTuru": "P94",
+  "min": 60,
+  "ust": 60,
+  "ilan": 1,
+  "ogrenim": "Ortaöğretim"
+ },
+ {
+  "yil": "2026",
   "kurum": "Türkiye Su Enstitüsü Başkanlığı",
   "puanTuru": "P3",
   "min": 60,
