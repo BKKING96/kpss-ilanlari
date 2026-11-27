@@ -312,19 +312,6 @@ async function dene(dosya) {
   if (!r.ok) throw 0;
   return r.json();
 }
-/* Veriyi iki yoldan biriyle getirir:
-   a) veriler/*.json  → kendi sunucundan açtığında (node guncelle.mjs --sunucu)
-   b) sayfanın kendi HTML'indeki gömülü blok → tek dosya olarak yayınlandığında */
-async function gomuluTaze() {
-  const r = await fetch(location.href.split("?")[0] + "?t=" + Date.now(), { cache: "no-store" });
-  if (!r.ok) throw 0;
-  const metin = await r.text();
-  const m = metin.match(/<script id="gommudata" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!m) throw 0;
-  const d = JSON.parse(m[1]);
-  if (!d?.ilanlar?.length) throw 0;
-  return [d.ilanlar, d.karne || [], d.ozet || {}];
-}
 /* Yayın sürümünde sayfada gömülü veri YOK (bilinçli: kabuk 112 KB olsun),
    liste tek başına veriler/ilanlar.json'dan geliyor. O tek istek bir kez
    tökezlerse (zayıf bağlantı, GitHub dağıtımın ortasında yakalanması,
