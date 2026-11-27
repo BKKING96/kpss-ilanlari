@@ -926,7 +926,8 @@ const KURULU = (() => {
 })();
 
 function kurRehberiGoster() {
-  if (document.getElementById("kurRehberi")) return;
+  const mevcut = document.getElementById("kurRehberi");
+  if (mevcut) { try { mevcut.scrollIntoView({ behavior: "smooth", block: "start" }); } catch { } return; }
   const kasa = document.createElement("div");
   kasa.id = "kurRehberi";
   kasa.className = "panel kurRehberi";
@@ -943,12 +944,18 @@ function kurRehberiGoster() {
     önce sağ üstteki üç noktadan <b>Safari'de Aç</b>'ı seç, sonra yukarıdakileri yap.
     iOS 16.4 ve üstünde kurulu hâli internet olmadan da son gördüğün listeyi açar.</p>
     <button type="button" id="kurKapat">Anladım, kapat</button>`;
-  const yer = document.getElementById("ilanlar");
-  yer.parentNode.insertBefore(kasa, yer);
-  document.getElementById("kurKapat").onclick = () => {
-    kasa.remove();
-    try { localStorage.setItem(KUR_KAPALI, "1"); } catch { }
-  };
+  /* Rehber düğmenin HEMEN altında açılır. Eskiden listenin başına
+     (#ilanlar'ın üstüne) ekleniyordu: düğme dipnottayken basınca tarif ekranın
+     çok üstünde kalıyor, "bir şey olmuyor" sanılıyordu.                  */
+  const bas = document.querySelector("header.site") || document.getElementById("ilanlar");
+  if (bas && bas.parentNode) bas.parentNode.insertBefore(kasa, bas.nextSibling || null);
+  else document.body.appendChild(kasa);
+  try { kasa.scrollIntoView({ behavior: "smooth", block: "start" }); } catch { }
+  const kapat = document.getElementById("kurKapat");
+  /* Kapatmak YALNIZ kutuyu kaldırır: düğme yerinde kalır, tarif bir daha
+     istenebilir. Eskiden "kapattım" kaydı bırakıp düğmeyi sonsuza dek
+     gizliyordu — bulunamayan düğme şikâyetinin ikinci sebebi.            */
+  if (kapat) kapat.onclick = () => kasa.remove();
 }
 
 let kurmaIstegi = null;
