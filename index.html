@@ -325,12 +325,28 @@ async function gomuluTaze() {
   if (!d?.ilanlar?.length) throw 0;
   return [d.ilanlar, d.karne || [], d.ozet || {}];
 }
+/* Yayın sürümünde sayfada gömülü veri YOK (bilinçli: kabuk 112 KB olsun),
+   liste tek başına veriler/ilanlar.json'dan geliyor. O tek istek bir kez
+   tökezlerse (zayıf bağlantı, GitHub dağıtımın ortasında yakalanması,
+   iOS'ta uyuyan sekme) ziyaretçi hiçbir şey görmüyordu. Üç deneme + artan
+   bekleme bunu büyük ölçüde topluyor; kalıcı olursa sağdaki kutu
+   ziyaretçiye ne yapacağını söylüyor.                                    */
+const bekleMs = (ms) => new Promise((r) => setTimeout(r, ms));
 async function veriGet() {
-  try {
-    return await Promise.all([dene("ilanlar.json"), dene("puan-karnesi.json"), dene("ozet.json")]);
-  } catch {
-    return await gomuluTaze();
+  let sonHata = null;
+  for (let deneme = 0; deneme < 3; deneme++) {
+    try {
+      return await Promise.all([dene("ilanlar.json"), dene("puan-karnesi.json"), dene("ozet.json")]);
+    } catch (e) {
+      sonHata = e;
+      if (deneme < 2) await bekleMs(500 * (deneme + 1));
+    }
   }
+  /* Yedek 1: sayfanın içindeki gömülü blok (yalnız yerel/çift tıkla açılan
+     sürümde doludur — yayında boş, o yüzden boşsa denemiyoruz bile:
+     boşuna 112 KB daha indirmiş olurduk).                                */
+  if (EMBED.ilanlar && EMBED.ilanlar.length) return [EMBED.ilanlar, EMBED.karne || [], EMBED.ozet || {}];
+  throw sonHata || new Error("veri alınamadı");
 }
 
 let CANLI = false;
