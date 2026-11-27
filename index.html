@@ -696,9 +696,7 @@ function kart(i) {
     <h3><a ${bag}>${kacir(i.baslik)}</a></h3>
     ${i.kurum ? `<div class="kurum">${kacir(i.kurum)}</div>` : ""}
     <div class="etiketler">${et.join("")}</div>
-    /* ÖNCE kırp, SONRA kaçır: ters sırada kırpılırsa "&quot;" gibi bir kaçış
-       ortadan bölünüp ekranda "&qu" diye çöp yazı çıkabilir.             */
-    ${i.ozet ? `<p class="ozetmetin">${kacir(i.ozet.slice(0,230))}${i.ozet.length>230?"…":""}</p>` : ""}
+    ${i.ozet ? `<p class="ozetmetin">${kacir(i.ozet).slice(0,230)}${i.ozet.length>230?"…":""}</p>` : ""}
     ${ekSatir}
     <div class="alt"><span>${kacir(i.kategori)} · ilan tarihi ${tarihce(i.tarih)}${i.kaynak?" · kaynak: "+kacir(i.kaynak):""}</span>
       ${url ? `<a class="git" ${bag}>İlanı kaynak sayfada aç →</a>` : ""}</div>
