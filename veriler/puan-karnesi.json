@@ -19,6 +19,24 @@
  },
  {
   "yil": "2026",
+  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
+  "puanTuru": "P93",
+  "min": 85,
+  "ust": 85,
+  "ilan": 2,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
+  "puanTuru": "P94",
+  "min": 85,
+  "ust": 85,
+  "ilan": 2,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Recep Tayyip Erdoğan Üniversitesi",
   "puanTuru": "P93",
   "min": 85,
@@ -102,24 +120,6 @@
   "yil": "2026",
   "kurum": "Avrupa Birliği Başkanlığı",
   "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
-  "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
-  "puanTuru": "P94",
   "min": 70,
   "ust": 70,
   "ilan": 1,
