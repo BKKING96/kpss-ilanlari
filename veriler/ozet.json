@@ -1,15 +1,15 @@
 {
- "guncelleme": "2026-11-27T12:30:05.134Z",
- "guncellemeYazi": "27.11.2026 15:30:05",
- "toplam": 574,
- "acik": 353,
+ "guncelleme": "2026-11-27T12:30:16.014Z",
+ "guncellemeYazi": "27.11.2026 15:30:16",
+ "toplam": 564,
+ "acik": 354,
  "ortaogretim": 38,
  "onlisans": 71,
- "kadro": 67435,
- "kpssli": 86,
- "kpssDisi": 488,
+ "kadro": 56173,
+ "kpssli": 87,
+ "kpssDisi": 477,
  "turSayilari": {
-  "P3": 46,
+  "P3": 47,
   "P93": 44,
   "P94": 28
  },
