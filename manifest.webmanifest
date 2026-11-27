@@ -1,0 +1,44 @@
+{
+ "id": "https://bkking96.github.io/kpss-ilanlari/",
+ "name": "KPSS İlan Ajansı — kamu personel alımları",
+ "short_name": "KPSS İlan",
+ "description": "KPSS ile kamu personeli alım ilanları; kadro türü, öğrenim, puan türü ve il göre filtrelenir.",
+ "start_url": "./?kaynak=ana-ekran",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "any",
+ "background_color": "#0b1220",
+ "theme_color": "#2563eb",
+ "lang": "tr",
+ "dir": "ltr",
+ "categories": [
+  "education",
+  "job_search"
+ ],
+ "icons": [
+  {
+   "src": "ikon-180.png",
+   "sizes": "180x180",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "ikon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "ikon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "ikon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
