@@ -73,6 +73,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Selçuk Üniversitesi",
+  "puanTuru": "P3",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Avrupa Birliği Başkanlığı",
   "puanTuru": "P94",
   "min": 70,
