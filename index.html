@@ -913,8 +913,10 @@ pwaKur();
    Bu yüzden düğme iPhone/iPad'de hiç görünmüyordu; Android'de çalışıp
    iOS'ta "çalışmamasının" sebebi tam olarak buydu, kod hatası değil.
    Buradaki çözüm: iOS algılanınca düğmeyi yine göster, ama yaptığın iş
-   sistem penceresi açmak değil, tek ekransız tarif göstermek olsun.      */
-const KUR_KAPALI = "kpss-kur-rehberi-kapali";
+   sistem penceresi açmak değil, tek ekransız tarif göstermek olsun.
+   DİKKAT (28 Kasım): düğme artık DİPNOTTA değil, sayfa başlığının altındadır.
+   Dipnottayken telefonda listenin ve kaynak listesinin altında kalıyordu;
+   kullanıcı hiç göremediği için "kurma çalışmıyor" diyordu.                */
 const IOSTA = /iP(hone|ad|od)/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS 13+ "masaüstü" modu
 const KURULU = (() => {
@@ -972,15 +974,14 @@ window.addEventListener("beforeinstallprompt", (olay) => {
     };
   }
 });
-/* iOS'ta yukarıdaki olay gelmeyeceği için düğmeyi burada kendimiz açıyoruz. */
+/* iOS'ta yukarıdaki olay gelmeyeceği için düğmeyi burada kendimiz açıyoruz.
+   Eski "Anladım, kapat" kaydı BİLİNÇLİ olarak okunmuyor: o kayıt düğmeyi
+   sonsuza dek gizliyor ve telefonda kurmanın tek yolu bu düğmeydi.         */
 {
   const dugme = $("#kur");
-  let kapatildi = false;
-  try { kapatildi = localStorage.getItem(KUR_KAPALI) === "1"; } catch { }
-  if (dugme && KURULU) {
-    dugme.hidden = true;                       // zaten kurulu: önermek gereksiz
-  } else if (dugme && IOSTA) {
-    dugme.hidden = kapatildi;
+  if (dugme && KURULU) dugme.hidden = true;      // zaten kurulu: önermeye gerek yok
+  else if (dugme && IOSTA) {
+    dugme.hidden = false;
     dugme.onclick = kurRehberiGoster;
   }
 }
