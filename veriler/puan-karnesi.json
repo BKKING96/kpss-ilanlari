@@ -104,7 +104,16 @@
   "puanTuru": "P93",
   "min": 70,
   "ust": 70,
-  "ilan": 3,
+  "ilan": 4,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
+  "kurum": "Gelir İdaresi Başkanlığı",
+  "puanTuru": "P94",
+  "min": 70,
+  "ust": 70,
+  "ilan": 2,
   "ogrenim": "Ön lisans"
  },
  {
@@ -151,15 +160,6 @@
   "ust": 70,
   "ilan": 1,
   "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gelir İdaresi Başkanlığı",
-  "puanTuru": "P94",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Ortaöğretim"
  },
  {
   "yil": "2026",
