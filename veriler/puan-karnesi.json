@@ -100,6 +100,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Gelir İdaresi Başkanlığı",
+  "puanTuru": "P93",
+  "min": 70,
+  "ust": 70,
+  "ilan": 3,
+  "ogrenim": "Ön lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Selçuk Üniversitesi",
   "puanTuru": "P3",
   "min": 70,
@@ -146,19 +155,10 @@
  {
   "yil": "2026",
   "kurum": "Gelir İdaresi Başkanlığı",
-  "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 2,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gelir İdaresi Başkanlığı",
   "puanTuru": "P94",
   "min": 70,
   "ust": 70,
-  "ilan": 2,
+  "ilan": 1,
   "ogrenim": "Ortaöğretim"
  },
  {
