@@ -28,15 +28,6 @@
  },
  {
   "yil": "2026",
-  "kurum": "T.C. Zafer Kalkınma Ajansı",
-  "puanTuru": "P3",
-  "min": 80,
-  "ust": 80,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
   "kurum": "Afet ve Acil Durum Yönetimi Başkanlığı",
   "puanTuru": "P3",
   "min": 80,
@@ -73,65 +64,11 @@
  },
  {
   "yil": "2026",
-  "kurum": "Selçuk Üniversitesi",
+  "kurum": "İçişleri Bakanlığı",
   "puanTuru": "P3",
   "min": 70,
   "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Avrupa Birliği Başkanlığı",
-  "puanTuru": "P94",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Avrupa Birliği Başkanlığı",
-  "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
-  "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Gaziantep İslam Bilim ve Teknoloji Üniversitesi",
-  "puanTuru": "P94",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Dışişleri Bakanlığı",
-  "puanTuru": "P94",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Dışişleri Bakanlığı",
-  "puanTuru": "P93",
-  "min": 70,
-  "ust": 70,
-  "ilan": 1,
+  "ilan": 3,
   "ogrenim": "Lisans"
  },
  {
@@ -316,33 +253,6 @@
  },
  {
   "yil": "2026",
-  "kurum": "Elazığ İl Özel İdaresi",
-  "puanTuru": "P3",
-  "min": 60,
-  "ust": 60,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "İçişleri Bakanlığı",
-  "puanTuru": "P3",
-  "min": 60,
-  "ust": 70,
-  "ilan": 4,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "İçişleri Bakanlığı",
-  "puanTuru": "P94",
-  "min": 60,
-  "ust": 60,
-  "ilan": 2,
-  "ogrenim": "Ortaöğretim"
- },
- {
-  "yil": "2026",
   "kurum": "Türkiye Su Enstitüsü Başkanlığı",
   "puanTuru": "P3",
   "min": 60,
@@ -379,15 +289,6 @@
  },
  {
   "yil": "2026",
-  "kurum": "İçişleri Bakanlığı",
-  "puanTuru": "P93",
-  "min": 60,
-  "ust": 60,
-  "ilan": 2,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
   "kurum": "B Sözleşmeli Resmi belgeyi gör PRO Kurumu",
   "puanTuru": "P3",
   "min": 60,
@@ -398,15 +299,6 @@
  {
   "yil": "2026",
   "kurum": "Karatay Belediyesi",
-  "puanTuru": "P93",
-  "min": 60,
-  "ust": 60,
-  "ilan": 1,
-  "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Jandarma Genel Komutanlığı",
   "puanTuru": "P93",
   "min": 60,
   "ust": 60,
@@ -439,15 +331,6 @@
   "ust": 60,
   "ilan": 1,
   "ogrenim": "Lisans"
- },
- {
-  "yil": "2026",
-  "kurum": "Uşak Üniversitesi",
-  "puanTuru": "P93",
-  "min": 50,
-  "ust": 50,
-  "ilan": 1,
-  "ogrenim": "Ön lisans"
  },
  {
   "yil": "2026",
