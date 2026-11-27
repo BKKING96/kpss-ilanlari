@@ -146,8 +146,11 @@
   footer { text-align:center; color:var(--soluk); font-size:12.5px; padding:0 16px 40px }
   /* Chrome/Android "kurulabilir" diye işaretleyince belirir. iOS'ta o işaret
      hiç gelmediği için düğmeyi kod tarafında açıyoruz (aşağıdaki IOSTA dalı). */
+  /* Kurma düğmesi BAŞLIK ALTINDA: telefonda ilk ekranda görünmeli. Dipnotta
+     kalırken kimse o kadar kaydırmıyor, "düğme yok" şikâyetinin sebebi buydu.
+     Chrome/Android "kurulabilir" işaretiyle, iOS'ta aşağıdaki IOSTA dalıyla açılır. */
   #kur { border:1px solid var(--marka); background:var(--marka); color:#fff; border-radius:999px;
-    padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; margin:0 auto 10px; display:block }
+    padding:7px 15px; font-size:13px; font-weight:600; cursor:pointer; margin:2px 0 12px; display:inline-block }
   #kur:hover { filter:brightness(1.08) }
   /* iOS kurma rehberi: listenin üstünde açılan, kapatılabilen tarif kutusu */
   .kurRehberi { padding:14px 16px; margin:0 0 14px; border-left:4px solid var(--marka) }
