@@ -163,6 +163,15 @@
  },
  {
   "yil": "2026",
+  "kurum": "Karşıyaka Belediyesi",
+  "puanTuru": "P3",
+  "min": 70,
+  "ust": 70,
+  "ilan": 1,
+  "ogrenim": "Lisans"
+ },
+ {
+  "yil": "2026",
   "kurum": "Marmara Üniversitesi",
   "puanTuru": "P93",
   "min": 70,
