@@ -950,9 +950,14 @@ function kurRehberiGoster() {
      (#ilanlar'ın üstüne) ekleniyordu: düğme dipnottayken basınca tarif ekranın
      çok üstünde kalıyor, "bir şey olmuyor" sanılıyordu.                  */
   const bas = document.querySelector("header.site") || document.getElementById("ilanlar");
-  if (bas && bas.parentNode) bas.parentNode.insertBefore(kasa, bas.nextSibling || null);
-  else document.body.appendChild(kasa);
-  try { kasa.scrollIntoView({ behavior: "smooth", block: "start" }); } catch { }
+  /* .wrap sarmalı: panel başlıkla aynı hizada ve genişlikte dursun; doğrudan
+     gövdeye eklenirse geniş ekranda kenardan kenara uzanırdı.            */
+  const sarmal = document.createElement("div");
+  sarmal.className = "wrap";
+  sarmal.appendChild(kasa);
+  if (bas && bas.parentNode) bas.parentNode.insertBefore(sarmal, bas.nextSibling || null);
+  else if (document.body) document.body.appendChild(sarmal);
+  try { sarmal.scrollIntoView({ behavior: "smooth", block: "start" }); } catch { }
   const kapat = document.getElementById("kurKapat");
   /* Kapatmak YALNIZ kutuyu kaldırır: düğme yerinde kalır, tarif bir daha
      istenebilir. Eskiden "kapattım" kaydı bırakıp düğmeyi sonsuza dek
