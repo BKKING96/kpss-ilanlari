@@ -144,10 +144,21 @@
   .bos { text-align:center; padding:46px 20px; color:var(--soluk) }
   .bos b { display:block; color:var(--metin); font-size:17px; margin-bottom:6px }
   footer { text-align:center; color:var(--soluk); font-size:12.5px; padding:0 16px 40px }
-  /* Chrome "kurulabilir" diye işaretleyince belirir; işaretlenmezse hiç görünmez */
+  /* Chrome/Android "kurulabilir" diye işaretleyince belirir. iOS'ta o işaret
+     hiç gelmediği için düğmeyi kod tarafında açıyoruz (aşağıdaki IOSTA dalı). */
   #kur { border:1px solid var(--marka); background:var(--marka); color:#fff; border-radius:999px;
     padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; margin:0 auto 10px; display:block }
   #kur:hover { filter:brightness(1.08) }
+  /* iOS kurma rehberi: listenin üstünde açılan, kapatılabilen tarif kutusu */
+  .kurRehberi { padding:14px 16px; margin:0 0 14px; border-left:4px solid var(--marka) }
+  .kurRehberi b { display:block; margin-bottom:8px }
+  .kurRehberi ol { margin:0 0 10px; padding-left:22px }
+  .kurRehberi li { margin-bottom:5px }
+  .kurRehberi .not { color:var(--soluk); font-size:12.5px }
+  .kurRehberi p.not { margin:0 0 10px }
+  .kurRehberi button { border:1px solid var(--kenar); background:transparent; color:var(--metin);
+    border-radius:999px; padding:5px 13px; font-size:12.5px; cursor:pointer }
+  .kurRehberi button:hover { border-color:var(--marka); color:var(--marka) }
   .yol { background:var(--panel); border:1px dashed var(--kenar); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; color:var(--soluk) }
   code { background:rgba(127,127,127,.14); padding:1px 5px; border-radius:5px; font-size:12.5px }
 </style>
