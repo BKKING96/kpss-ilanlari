@@ -872,6 +872,54 @@ function pwaKur() {
   } catch { }
 }
 pwaKur();
+
+/* ---- "Telefona kur" düğmesi -------------------------------------------------
+   ANDROID (Chrome/Edge/Firefox): tarayıcı `beforeinstallprompt` olayını
+   kendisi tetikler; biz saklayıp düğmeye basınca sistem kurma penceresini
+   açıyoruz.
+   iOS (Safari/Chrome/Firefox hepsi WebKit): Apple bu olayı HİÇ tetiklemez —
+   web sitesi kurulumu kullanıcıyı elle yönlendirmekten başka yolu yok.
+   Bu yüzden düğme iPhone/iPad'de hiç görünmüyordu; Android'de çalışıp
+   iOS'ta "çalışmamasının" sebebi tam olarak buydu, kod hatası değil.
+   Buradaki çözüm: iOS algılanınca düğmeyi yine göster, ama yaptığın iş
+   sistem penceresi açmak değil, tek ekransız tarif göstermek olsun.      */
+const KUR_KAPALI = "kpss-kur-rehberi-kapali";
+const IOSTA = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS 13+ "masaüstü" modu
+const KURULU = (() => {
+  try {
+    if (navigator.standalone === true) return true;                      // iOS: ana ekrandan açıldı
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.matchMedia("(display-mode: minimal-ui)").matches;
+  } catch { return false; }
+})();
+
+function kurRehberiGoster() {
+  if (document.getElementById("kurRehberi")) return;
+  const kasa = document.createElement("div");
+  kasa.id = "kurRehberi";
+  kasa.className = "panel kurRehberi";
+  kasa.innerHTML = `<b>iPhone / iPad'e kurmak (Safari)</b>
+    <ol>
+      <li>Adres çubuğunun sağındaki <b>Paylaş</b> düğmesine dokun
+        <span class="not">(kare içinden ok çıkan simge)</span>.</li>
+      <li>Açılan listede <b>Ana Ekrana Ekle</b>'yı seç
+        <span class="not">liste uzunsa biraz kaydır</span>.</li>
+      <li>Sağ üstte <b>Ekle</b> de. Artık ana ekranındaki
+        <b>KPSS İlan</b> simgesi adres çubuğu olmadan açılır.</li>
+    </ol>
+    <p class="not">Chrome veya Instagram içinden açtıysan bu seçenek görünmez:
+    önce sağ üstteki üç noktadan <b>Safari'de Aç</b>'ı seç, sonra yukarıdakileri yap.
+    iOS 16.4 ve üstünde kurulu hâli internet olmadan da son gördüğün listeyi açar.</p>
+    <button type="button" id="kurKapat">Anladım, kapat</button>`;
+  const yer = document.getElementById("ilanlar");
+  yer.parentNode.insertBefore(kasa, yer);
+  document.getElementById("kurKapat").onclick = () => {
+    kasa.remove();
+    try { localStorage.setItem(KUR_KAPALI, "1"); } catch { }
+  };
+}
+
 let kurmaIstegi = null;
 window.addEventListener("beforeinstallprompt", (olay) => {
   olay.preventDefault();
@@ -886,6 +934,18 @@ window.addEventListener("beforeinstallprompt", (olay) => {
     };
   }
 });
+/* iOS'ta yukarıdaki olay gelmeyeceği için düğmeyi burada kendimiz açıyoruz. */
+{
+  const dugme = $("#kur");
+  let kapatildi = false;
+  try { kapatildi = localStorage.getItem(KUR_KAPALI) === "1"; } catch { }
+  if (dugme && KURULU) {
+    dugme.hidden = true;                       // zaten kurulu: önermek gereksiz
+  } else if (dugme && IOSTA) {
+    dugme.hidden = kapatildi;
+    dugme.onclick = kurRehberiGoster;
+  }
+}
 
 if (CANLI) {
   durumSatiri("Son veri çekimi: " + (OZET.guncellemeYazi || "") + " · " + CANLI_YAZI());
